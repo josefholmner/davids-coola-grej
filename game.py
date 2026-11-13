@@ -1,6 +1,7 @@
-"""Catch matching additions to grow a tree and explore harder levels."""
+"""Catch matching sums and differences to grow a tree and explore harder levels."""
 import colorsys
 import random
+import math
 import time
 from dataclasses import dataclass
 try:
@@ -24,6 +25,10 @@ class Difficulty:
     @property
     def min_target(self):
         return max(2, self.max_operand - 1)
+
+    @property
+    def subtraction_chance(self):
+        return min(0.60, 0.10 + (self.level - 1) * 0.05)
 
     @property
     def speed(self):
@@ -64,9 +69,12 @@ class GameState:
             target = low if target == high else target + 1
         self.target = target
 
-    def catch(self, left, right):
-        answer = left + right
-        self.last_answer = f'{left} + {right} = {answer}'
+    def catch(self, left, right, operator='+'):
+        if operator not in ('+', '-'):
+            raise ValueError('Unsupported operator')
+        answer = left + right if operator == '+' else left - right
+        symbol = '+' if operator == '+' else '−'
+        self.last_answer = f'{left} {symbol} {right} = {answer}'
         if answer == self.target:
             self.score += self.target * 10
             self.growth += 1
@@ -97,6 +105,20 @@ def make_addition(target, max_operand):
     if left + right == target:
         right = right % max_operand + 1
     return left, right
+
+
+def make_problem(target, difficulty):
+    """Subtraction starts rare and becomes more common; answers stay positive."""
+    if random.random() >= difficulty.subtraction_chance:
+        left, right = make_addition(target, difficulty.max_operand)
+        return left, right, '+'
+    answer = target
+    if random.random() >= 0.5:
+        answer = random.randint(difficulty.min_target, difficulty.max_operand * 2)
+        if answer == target:
+            answer = difficulty.min_target if answer == difficulty.max_operand * 2 else answer + 1
+    right = random.randint(1, difficulty.max_operand)
+    return answer + right, right, '-'
 
 
 class LogicalCanvas:
@@ -165,13 +187,14 @@ class NumberCatch:
         self.state = GameState()
         self.display_growth = float(self.state.growth)
         self.transition_time = 0
+        self.animation_time = 0
         self.basket_x = self.PLAY_RIGHT / 2
         self.drops = []
         self.keys.clear()
         self.mouse_x = None
         self.spawn_in = 1.2
         self.paused = False
-        self.message = 'Catch matching additions to grow your tree!'
+        self.message = 'Catch matching + and − problems to grow your tree!'
         self.message_time = 5
 
     def toggle_fullscreen(self):
@@ -206,14 +229,16 @@ class NumberCatch:
 
     def spawn(self):
         difficulty = self.state.difficulty
-        left, right = make_addition(self.state.target, difficulty.max_operand)
-        label = f'{left}+{right}'
+        left, right, operator = make_problem(self.state.target, difficulty)
+        symbol = '+' if operator == '+' else '−'
+        label = f'{left}{symbol}{right}'
         half_width = max(44, len(label) * 9 + 12)
         self.drops.append({'x': random.randint(half_width + 8, self.PLAY_RIGHT - half_width - 8),
-                           'y': 170.0, 'left': left, 'right': right, 'half_width': half_width,
+                           'y': 170.0, 'left': left, 'right': right, 'operator': operator, 'half_width': half_width,
                            'speed': random.uniform(difficulty.speed, difficulty.speed + 15)})
 
     def update(self, dt):
+        self.animation_time += dt
         self.message_time = max(0, self.message_time - dt)
         if self.transition_time > 0:
             self.transition_time = max(0, self.transition_time - dt)
@@ -231,7 +256,7 @@ class NumberCatch:
             previous_y = drop['y']
             drop['y'] += drop['speed'] * dt
             if previous_y + 20 <= self.BASKET_Y <= drop['y'] + 20 and abs(drop['x'] - self.basket_x) <= half:
-                result = self.state.catch(drop['left'], drop['right'])
+                result = self.state.catch(drop['left'], drop['right'], drop.get('operator', '+'))
                 if result == 'level_up':
                     self.message = f'Fully grown! Welcome to level {self.state.level}.'
                     self.display_growth, self.transition_time = TREE_FULL, 1.6
@@ -277,12 +302,34 @@ class NumberCatch:
                 for dx, dy in [(-40, 0), (32, -25), (12, 35)]:
                     cy = top + dy
                     c.create_oval(x + dx - 7, cy - 7, x + dx + 7, cy + 7, fill='#ffcd75', outline='')
+        if fraction > 0.01:
+            self.draw_butterflies(x, top, fraction)
         self.text(x, 203, 'YOUR TREE', 17, '#96e9b8')
         self.text(x, 237, 'Correct: grow   Wrong: shrink', 10, '#c3d7cb')
         for i in range(TREE_FULL):
             c.create_rectangle(778 + i * 28, 625, 799 + i * 28, 636,
                                fill='#70daa3' if self.display_growth >= i + 0.8 else '#304737', outline='')
         self.text(x, 666, 'Grow it fully to level up!', 11, '#c3d7cb')
+
+    def draw_butterflies(self, tree_x, canopy_y, fraction):
+        c = self.canvas
+        colors = [('#ffd77a', '#ffad66'), ('#d5b0ff', '#a684eb'),
+                  ('#ffb1d2', '#e779ae'), ('#97e5ff', '#59bcdf'), ('#fff0a5', '#e9c768')]
+        for i in range(1 + int(fraction * 4)):
+            phase = self.animation_time * (0.7 + i * 0.08) + i * 2.3
+            x = tree_x + math.sin(phase) * (55 + i * 5)
+            y = canopy_y + 12 + math.cos(phase * 1.4) * 35 + math.sin(phase * 2.1) * 9
+            wing = 3 + abs(math.sin(self.animation_time * 8 + i)) * 10
+            upper, lower = colors[i]
+            for side in (-1, 1):
+                cx = x + side * (wing / 2 + 1)
+                c.create_oval(cx - wing / 2, y - 11, cx + wing / 2, y + 2,
+                              fill=upper, outline='')
+                c.create_oval(cx - wing * 0.4, y, cx + wing * 0.4, y + 9,
+                              fill=lower, outline='')
+                c.create_line(x, y - 5, x + side * 4, y - 13, fill='#ece5cf', width=1)
+            c.create_line(x, y - 6, x, y + 8, fill='#403842', width=3)
+            c.create_oval(x - 2, y - 9, x + 2, y - 5, fill='#403842', outline='')
 
     def draw(self):
         c, s = self.canvas, self.state
@@ -294,13 +341,13 @@ class NumberCatch:
         self.text(25, 68, f'Level {s.level}    •    Score {s.score}', 13, '#b7c9df', anchor='w')
         self.text(360, 25, 'TARGET', 11, '#b7c9df')
         self.text(360, 68, str(s.target), 36, '#78e7c1')
-        self.text(360, 119, 'Catch an addition equal to the target', 15)
+        self.text(360, 119, 'Catch a + or − problem equal to the target', 15)
         self.text(860, 35, 'F11: full screen', 13, '#b7c9df')
-        self.text(860, 73, f'Numbers 1–{s.difficulty.max_operand}', 12, '#b7c9df')
+        self.text(860, 73, f'Numbers up to {s.difficulty.max_operand * 3}', 12, '#b7c9df')
         for drop in self.drops:
             x, y, half = drop['x'], drop['y'], drop['half_width']
             c.create_rectangle(x - half, y - 20, x + half, y + 20, fill='#30496b', outline='#6d96c7', width=2)
-            self.text(x, y - 1, f"{drop['left']}+{drop['right']}", 21)
+            self.text(x, y - 1, f"{drop['left']}{'−' if drop.get('operator') == '-' else '+'}{drop['right']}", 21)
         x, y, half = self.basket_x, self.BASKET_Y, self.BASKET_WIDTH / 2
         c.create_polygon(x - half, y, x + half, y, x + half - 12, y + 32,
                          x - half + 12, y + 32, fill='#3aab91', outline='#78e7c1', width=3)
@@ -308,13 +355,13 @@ class NumberCatch:
         self.text(x, y + 15, 'CATCH', 13, '#0b2530')
         if self.message_time > 0:
             self.text(360, 163, self.message, 12, '#ffe1a0', width=680)
-        self.text(360, 652, 'Skip unwanted additions. Missing one costs nothing.', 11, '#c3d0e2')
+        self.text(360, 652, 'Skip unwanted problems. Missing one costs nothing.', 11, '#c3d0e2')
         self.text(360, 682, '← → / A D / Mouse: move   Space: pause   R: restart   Esc: exit', 10, '#c3d0e2')
         self.draw_tree()
         if self.paused:
             c.create_rectangle(110, 260, 610, 440, fill=self.PANEL, outline='#426080', width=2)
             self.text(360, 310, 'PAUSED', 30)
-            self.text(360, 365, 'Grow your tree with matching additions.', 15)
+            self.text(360, 365, 'Grow your tree with matching answers.', 15)
             self.text(360, 408, 'Press Space to continue', 14, '#78e7c1')
 
     def tick(self):
