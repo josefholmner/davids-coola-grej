@@ -1,43 +1,44 @@
-"""Number Catch: move the basket and catch numbers that add up to the target."""
+"""Number Catch: move the basket and catch additions that equal the target."""
 import random
 import time
 try:
     import tkinter as tk
 except ModuleNotFoundError:
     import windows_graphics as tk
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 @dataclass
 class GameState:
     target: int = 0
-    total: int = 0
     lives: int = 3
     score: int = 0
     round: int = 1
-    caught: list = field(default_factory=list)
+    last_answer: str = ""
 
     def __post_init__(self):
         if not self.target:
-            self.target = random.randint(10, 25)
+            self.target = random.randint(2, 18)
 
-    def catch(self, value):
-        """Apply one catch and return 'caught', 'complete', or 'over'."""
-        self.total += value
-        self.caught.append(value)
-        if self.total > self.target:
+    def catch(self, left, right):
+        """Check each addition on its own against the current target."""
+        answer = left + right
+        self.last_answer = f"{left} + {right} = {answer}"
+        if answer != self.target:
             self.lives -= 1
-            self.total = 0
-            self.caught.clear()
-            return "over"
-        if self.total == self.target:
-            self.score += self.target * 10
-            self.round += 1
-            self.target = random.randint(10, min(40, 24 + self.round))
-            self.total = 0
-            self.caught.clear()
-            return "complete"
-        return "caught"
+            return "wrong"
+        self.score += self.target * 10
+        self.round += 1
+        self.target = random.choice([n for n in range(2, 19) if n != self.target])
+        return "complete"
+
+
+def make_addition(target):
+    """Mix matching and nonmatching sums; both operands are between 1 and 9."""
+    matching = random.random() < 0.4
+    choices = [(a, b) for a in range(1, 10) for b in range(1, 10)
+               if ((a + b == target) == matching)]
+    return random.choice(choices)
 
 
 class NumberCatch:
@@ -70,7 +71,7 @@ class NumberCatch:
         self.mouse_x = None
         self.spawn_in = 0.4
         self.paused = False
-        self.message = "Catch numbers to make the target. Let unwanted numbers fall!"
+        self.message = "Catch additions equal to the target. Let the others fall!"
         self.message_time = 5.0
 
     def key_down(self, event):
@@ -93,11 +94,10 @@ class NumberCatch:
         self.paused = True
 
     def spawn(self):
-        # Sometimes provide an exact remainder, so every round stays achievable.
-        remaining = self.state.target - self.state.total
-        value = remaining if remaining <= 9 and random.random() < 0.3 else random.randint(1, 9)
-        self.drops.append({"x": random.randint(30, self.WIDTH - 30), "y": 150.0,
-                           "value": value, "speed": random.uniform(95, 135) + min(90, (self.state.round - 1) * 7)})
+        left, right = make_addition(self.state.target)
+        self.drops.append({"x": random.randint(52, self.WIDTH - 52), "y": 150.0,
+                           "left": left, "right": right,
+                           "speed": random.uniform(95, 135) + min(90, (self.state.round - 1) * 7)})
 
     def update(self, dt):
         direction = int(bool(self.keys & {"right", "d"})) - int(bool(self.keys & {"left", "a"}))
@@ -118,15 +118,15 @@ class NumberCatch:
             # Test the bottom edge crossing the basket rim, not the whole basket area.
             if previous_y + 20 <= self.BASKET_Y <= drop["y"] + 20 and abs(drop["x"] - self.basket_x) <= half:
                 self.drops.remove(drop)
-                result = self.state.catch(drop["value"])
+                result = self.state.catch(drop["left"], drop["right"])
                 if result == "complete":
-                    self.message = "Perfect sum! A new target is ready."
+                    self.message = f"Correct! {self.state.last_answer}. Next target: {self.state.target}"
                     self.message_time = 2.5
                     self.drops.clear()
                     self.spawn_in = 0.7
                     break
-                if result == "over":
-                    self.message = "Too much! One life lost. Try this target again."
+                if result == "wrong":
+                    self.message = f"{self.state.last_answer}, not {self.state.target}. One life lost!"
                     self.message_time = 3
                     self.drops.clear()
                     self.spawn_in = 0.9
@@ -147,27 +147,27 @@ class NumberCatch:
         self.text(765, 30, f"Lives  {s.lives} / 3", 14, "#ffb8bd", anchor="e")
         self.text(400, 25, "TARGET", 11, "#9aabc5")
         self.text(400, 61, str(s.target), 34, "#78e7c1")
-        self.text(400, 108, f"Your sum: {s.total}     •     Still need: {s.target - s.total}", 15)
+        self.text(400, 108, "Catch an addition that equals the target", 15)
         for x in range(40, self.WIDTH, 80):
             c.create_line(x, 148, x, self.BASKET_Y - 10, fill="#152135", dash=(2, 10))
         for drop in self.drops:
             x, y = drop["x"], drop["y"]
-            c.create_oval(x - 20, y - 20, x + 20, y + 20, fill="#30496b", outline="#6d96c7", width=2)
-            self.text(x, y - 1, str(drop["value"]), 21)
+            c.create_rectangle(x - 44, y - 20, x + 44, y + 20, fill="#30496b", outline="#6d96c7", width=2)
+            self.text(x, y - 1, f"{drop['left']}+{drop['right']}", 21)
         x, y, half = self.basket_x, self.BASKET_Y, self.BASKET_WIDTH / 2
         c.create_polygon(x - half, y, x + half, y, x + half - 12, y + 32,
                          x - half + 12, y + 32, fill="#3aab91", outline="#78e7c1", width=3)
         c.create_line(x - half - 3, y, x + half + 3, y, fill="#b8ffe6", width=5)
-        self.text(x, y + 15, str(s.total), 13, "#0b2530")
+        self.text(x, y + 15, "CATCH", 13, "#0b2530")
         if self.message_time > 0:
             self.text(400, 169, self.message, 12, "#ffe1a0")
-        equation = " + ".join(map(str, s.caught)) or "Catch your first number"
+        equation = s.last_answer or "Skip any addition that does not match. Missing one costs nothing."
         self.text(400, 605, equation, 12, "#9aabc5", width=740)
         self.text(400, 628, "← → / A D / Mouse: move     Space: pause     R: restart     Esc: quit", 10, "#9aabc5")
         if self.paused or s.lives <= 0:
             c.create_rectangle(145, 235, 655, 425, fill=self.PANEL, outline="#426080", width=2)
             self.text(400, 285, "GAME OVER" if s.lives <= 0 else "PAUSED", 30)
-            self.text(400, 339, f"Final score: {s.score}" if s.lives <= 0 else "Catch only the numbers you need.", 16)
+            self.text(400, 339, f"Final score: {s.score}" if s.lives <= 0 else "Catch additions equal to the target.", 16)
             self.text(400, 385, "Press R to play again" if s.lives <= 0 else "Press Space to continue", 14, "#78e7c1")
 
     def tick(self):
