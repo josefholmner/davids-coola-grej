@@ -1,7 +1,10 @@
 """Number Catch: move the basket and catch numbers that add up to the target."""
 import random
 import time
-import tkinter as tk
+try:
+    import tkinter as tk
+except ModuleNotFoundError:
+    import windows_graphics as tk
 from dataclasses import dataclass, field
 
 
@@ -185,3 +188,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

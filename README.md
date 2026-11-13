@@ -1,16 +1,16 @@
 # Number Catch
 
-A small Python game: move a basket and catch falling numbers from 1 to 9 so their sum matches the target at the top.
+Move a basket and catch falling numbers from 1 to 9 so their sum matches the target at the top.
 
 ## Run
 
-Use Python 3.9 or newer with Tkinter (included in standard Python installations on Windows):
+From this folder:
 
-```sh
+```powershell
 python game.py
 ```
 
-On Linux, your distribution may require installing `python3-tk`.
+Requires Python 3.9 or newer. On Windows, no additional packages are needed: the game uses native Windows graphics if Tkinter is unavailable. Keep `windows_graphics.py` beside `game.py`. On other operating systems, Tkinter is required.
 
 ## Play
 
@@ -23,20 +23,8 @@ On Linux, your distribution may require installing `python3-tk`.
 
 The game pauses automatically when its window loses focus.
 
-### On this computer
-
-The default Python installation is missing Tkinter. An installed Python that can run the game is:
-
-```powershell
-& 'C:\opt\ros2-algoryx\install\python.exe' .\game.py
-```
-
-To use `python game.py` instead, modify your standard Python installation and enable its **Tcl/Tk and IDLE** component.
-
 ## Check the rules
 
-```sh
+```powershell
 python -m unittest -v
 ```
-
-Use a Python installation with Tkinter for these tests too.
