@@ -1,28 +1,32 @@
-# Number Catch
+# Number Catch — Growing Tree
 
-Move a basket and catch falling additions, such as `6+2` or `7+6`, whose answer equals the target at the top. Each operand is between 1 and 9; targets range from 2 to 18.
+Catch falling additions whose answers equal the target. Every correct catch grows a tree beside the play area; wrong catches shrink it.
 
 ## Run
-
-From this folder:
 
 ```powershell
 python game.py
 ```
 
-Requires Python 3.9 or newer. On Windows, no additional packages are needed: the game uses native Windows graphics if Tkinter is unavailable. Keep `windows_graphics.py` beside `game.py`. On other operating systems, Tkinter is required.
+Requires Python 3.9 or newer. No extra packages are needed on Windows: `windows_graphics.py` provides native graphics when Tkinter is unavailable. Keep it beside `game.py`. On other operating systems, Tkinter is required.
 
-## Play
+## Controls
 
-- Move with **Left/Right**, **A/D**, or the **mouse**.
-- Each addition is checked on its own. For target **8**, catch **6+2** or **5+3**.
-- Catch a matching addition to earn points and start a new round with a different target.
-- Catching any wrong addition costs one of your three lives; the target stays the same.
-- Let unwanted additions fall past the basket; there is no penalty for missing them.
-- Falling additions get faster as rounds progress.
-- **Space** pauses, **R** restarts, and **Esc** quits.
+- **Left/Right**, **A/D**, or **mouse**: move the basket.
+- **F11**: toggle full screen. The game scales to fit the display while preserving its proportions.
+- **Esc**: leave full screen; in a window, quit.
+- **Space**: pause or continue. Changing to another app also pauses the game.
+- **R**: restart from level 1.
 
-The game pauses automatically when its window loses focus.
+## Grow your tree
+
+Each addition is checked individually. If the target is **5**, catch **2+3** or **4+1**, and skip additions with other answers. Missing an addition has no penalty.
+
+Your tree starts with two of six growth steps. A correct catch grows it one step, earns points, and changes the target. A wrong catch shrinks it one step.
+
+A fully grown tree advances you to the next level, with a new background color and a fresh seedling. If the tree shrinks to nothing, you return to the previous level with a half-grown tree. On level 1, a small seedling always remains, so you can keep practicing. There are no lives or game-over screen.
+
+Level 1 uses operands from 1–3, level 2 from 1–4, and level 3 from 1–5. Later levels introduce increasingly large numbers. Falling speed and frequency rise gradually; both have limits so the game remains playable.
 
 ## Check the rules
 

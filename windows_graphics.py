@@ -66,6 +66,22 @@ api(gdi, 'SetTextColor', W.DWORD, W.HDC, W.DWORD)
 api(gdi, 'SetBkMode', C.c_int, W.HDC, C.c_int)
 api(gdi, 'BitBlt', W.BOOL, W.HDC, C.c_int, C.c_int, C.c_int, C.c_int, W.HDC, C.c_int, C.c_int, W.DWORD)
 api(gdi, 'CreateFontW', W.HFONT, *([C.c_int] * 5), *([W.DWORD] * 8), W.LPCWSTR)
+api(user, 'GetClientRect', W.BOOL, W.HWND, C.POINTER(W.RECT))
+api(user, 'GetWindowRect', W.BOOL, W.HWND, C.POINTER(W.RECT))
+api(user, 'GetWindowLongW', W.LONG, W.HWND, C.c_int)
+api(user, 'SetWindowLongW', W.LONG, W.HWND, C.c_int, W.LONG)
+api(user, 'MonitorFromWindow', W.HANDLE, W.HWND, W.DWORD)
+api(gdi, 'StretchBlt', W.BOOL, W.HDC, C.c_int, C.c_int, C.c_int, C.c_int,
+    W.HDC, C.c_int, C.c_int, C.c_int, C.c_int, W.DWORD)
+api(gdi, 'SetStretchBltMode', C.c_int, W.HDC, C.c_int)
+
+
+class MONITORINFO(C.Structure):
+    _fields_ = [('size', W.DWORD), ('monitor', W.RECT), ('work', W.RECT), ('flags', W.DWORD)]
+
+
+api(user, 'GetMonitorInfoW', W.BOOL, W.HANDLE, C.POINTER(MONITORINFO))
+
 
 
 def color(value):
@@ -82,6 +98,8 @@ class Tk:
         self.closed = False
         self.error = None
         self.fonts = {}
+        self.fullscreen = False
+        self.saved_rect = None
         self._proc = WNDPROC(self._dispatch)
         instance = kernel.GetModuleHandleW(None)
         self.class_name = 'NumberCatch_' + str(id(self))
@@ -98,8 +116,33 @@ class Tk:
     def title(self, title):
         user.SetWindowTextW(self.hwnd, title)
 
-    def resizable(self, *_):
-        pass
+    def resizable(self, width, height):
+        style = 0x00CF0000 if width or height else 0x00CA0000
+        user.SetWindowLongW(self.hwnd, -16, style)
+        user.SetWindowPos(self.hwnd, None, 0, 0, 0, 0, 0x37)
+
+    def attributes(self, name, value):
+        if name != '-fullscreen':
+            raise ValueError(name)
+        if bool(value) == self.fullscreen:
+            return
+        if value:
+            self.saved_rect = W.RECT()
+            user.GetWindowRect(self.hwnd, C.byref(self.saved_rect))
+            self.saved_style = user.GetWindowLongW(self.hwnd, -16)
+            monitor = MONITORINFO()
+            monitor.size = C.sizeof(monitor)
+            if not user.GetMonitorInfoW(user.MonitorFromWindow(self.hwnd, 2), C.byref(monitor)):
+                raise C.WinError(C.get_last_error())
+            rect = monitor.monitor
+            user.SetWindowLongW(self.hwnd, -16, C.c_long(0x80000000).value)
+        else:
+            rect = self.saved_rect
+            user.SetWindowLongW(self.hwnd, -16, self.saved_style)
+        user.SetWindowPos(self.hwnd, None, rect.left, rect.top,
+                          rect.right - rect.left, rect.bottom - rect.top, 0x224)
+        self.fullscreen = bool(value)
+        user.InvalidateRect(self.hwnd, None, False)
 
     def bind(self, event, callback):
         self.bindings[event] = callback
@@ -150,7 +193,7 @@ class Tk:
                     callback()
                 return 0
             if message in (0x0100, 0x0101):
-                key = {37: 'left', 39: 'right', 32: 'space', 27: 'escape'}.get(wparam, chr(wparam).lower())
+                key = {37: 'left', 39: 'right', 32: 'space', 27: 'escape', 122: 'f11'}.get(wparam, chr(wparam).lower())
                 # Ignore key repeat for pause/restart, but keep movement responsive.
                 if message == 0x0100 and lparam & (1 << 30):
                     return 0
@@ -161,7 +204,8 @@ class Tk:
             if message == 0x0200 and self.canvas:
                 handler = self.canvas.bindings.get('<Motion>')
                 if handler:
-                    handler(SimpleNamespace(x=C.c_short(lparam & 65535).value))
+                    scale, ox, _oy, _w, _h = self.canvas.viewport()
+                    handler(SimpleNamespace(x=(C.c_short(lparam & 65535).value - ox) / scale))
                 return 0
             if message == 0x0008 and '<FocusOut>' in self.bindings:
                 self.bindings['<FocusOut>'](None)
@@ -186,7 +230,7 @@ class Canvas:
         self.commands, self.bindings = [], {}
         root.canvas = self
         rect = W.RECT(0, 0, width, height)
-        user.AdjustWindowRect(C.byref(rect), 0x00CA0000, False)
+        user.AdjustWindowRect(C.byref(rect), user.GetWindowLongW(root.hwnd, -16), False)
         user.SetWindowPos(root.hwnd, None, 0, 0, rect.right - rect.left, rect.bottom - rect.top, 6)
 
     def pack(self):
@@ -212,6 +256,13 @@ class Canvas:
 
     def create_polygon(self, *coords, **options):
         self.commands.append(('polygon', coords, options))
+
+    def viewport(self):
+        rect = W.RECT()
+        user.GetClientRect(self.root.hwnd, C.byref(rect))
+        width, height = max(1, rect.right), max(1, rect.bottom)
+        scale = min(width / self.width, height / self.height)
+        return scale, round((width - self.width * scale) / 2), round((height - self.height * scale) / 2), width, height
 
     def paint(self, screen):
         dc = gdi.CreateCompatibleDC(screen)
@@ -247,7 +298,26 @@ class Canvas:
                 gdi.SelectObject(dc, old_pen)
                 gdi.DeleteObject(brush)
                 gdi.DeleteObject(pen)
-            gdi.BitBlt(screen, 0, 0, self.width, self.height, dc, 0, 0, 0x00CC0020)
+            scale, ox, oy, width, height = self.viewport()
+            # Compose the scaled game AND letterbox bars offscreen. Clearing the
+            # visible window before StretchBlt exposes a black frame and flickers.
+            frame = gdi.CreateCompatibleDC(screen)
+            frame_bitmap = gdi.CreateCompatibleBitmap(screen, width, height)
+            old_frame = gdi.SelectObject(frame, frame_bitmap)
+            try:
+                black = gdi.CreateSolidBrush(0)
+                bounds = W.RECT(0, 0, width, height)
+                user.FillRect(frame, C.byref(bounds), black)
+                gdi.DeleteObject(black)
+                gdi.SetStretchBltMode(frame, 3)
+                gdi.StretchBlt(frame, ox, oy, round(self.width * scale), round(self.height * scale),
+                               dc, 0, 0, self.width, self.height, 0x00CC0020)
+                # Present only the completed frame, with one write to the window.
+                gdi.BitBlt(screen, 0, 0, width, height, frame, 0, 0, 0x00CC0020)
+            finally:
+                gdi.SelectObject(frame, old_frame)
+                gdi.DeleteObject(frame_bitmap)
+                gdi.DeleteDC(frame)
         finally:
             gdi.SelectObject(dc, old_bitmap)
             gdi.DeleteObject(bitmap)

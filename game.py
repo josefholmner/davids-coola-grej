@@ -1,90 +1,201 @@
-"""Number Catch: move the basket and catch additions that equal the target."""
+"""Catch matching additions to grow a tree and explore harder levels."""
+import colorsys
 import random
 import time
+from dataclasses import dataclass
 try:
     import tkinter as tk
+    NATIVE = False
 except ModuleNotFoundError:
     import windows_graphics as tk
-from dataclasses import dataclass
+    NATIVE = True
+
+TREE_FULL = 6
+
+
+@dataclass(frozen=True)
+class Difficulty:
+    level: int
+
+    @property
+    def max_operand(self):
+        return self.level + 2 if self.level <= 3 else 2 * self.level - 2
+
+    @property
+    def min_target(self):
+        return max(2, self.max_operand - 1)
+
+    @property
+    def speed(self):
+        return min(330, 65 + (self.level - 1) * 14)
+
+    @property
+    def interval(self):
+        return max(0.65, 1.9 - (self.level - 1) * 0.12)
+
+
+def level_color(level):
+    rgb = colorsys.hsv_to_rgb((0.56 + (level - 1) * 0.13) % 1, 0.55, 0.19)
+    return '#' + ''.join(f'{round(channel * 255):02x}' for channel in rgb)
 
 
 @dataclass
 class GameState:
+    level: int = 1
+    growth: int = 2
     target: int = 0
-    lives: int = 3
     score: int = 0
-    round: int = 1
-    last_answer: str = ""
+    last_answer: str = ''
 
     def __post_init__(self):
         if not self.target:
-            self.target = random.randint(2, 18)
+            self.new_target()
+
+    @property
+    def difficulty(self):
+        return Difficulty(self.level)
+
+    def new_target(self):
+        difficulty = self.difficulty
+        low, high = difficulty.min_target, difficulty.max_operand * 2
+        # Choose a different target without building an ever larger list.
+        target = random.randint(low, high)
+        if target == self.target:
+            target = low if target == high else target + 1
+        self.target = target
 
     def catch(self, left, right):
-        """Check each addition on its own against the current target."""
         answer = left + right
-        self.last_answer = f"{left} + {right} = {answer}"
-        if answer != self.target:
-            self.lives -= 1
-            return "wrong"
-        self.score += self.target * 10
-        self.round += 1
-        self.target = random.choice([n for n in range(2, 19) if n != self.target])
-        return "complete"
+        self.last_answer = f'{left} + {right} = {answer}'
+        if answer == self.target:
+            self.score += self.target * 10
+            self.growth += 1
+            if self.growth >= TREE_FULL:
+                self.level += 1
+                self.growth = 2
+                result = 'level_up'
+            else:
+                result = 'correct'
+            self.new_target()
+            return result
+        self.growth -= 1
+        if self.growth <= 0:
+            if self.level > 1:
+                self.level -= 1
+                self.growth = TREE_FULL // 2
+                self.new_target()
+                return 'level_down'
+            self.growth = 1  # A seedling always remains on the first level.
+        return 'wrong'
 
 
-def make_addition(target):
-    """Mix matching and nonmatching sums; both operands are between 1 and 9."""
-    matching = random.random() < 0.4
-    choices = [(a, b) for a in range(1, 10) for b in range(1, 10)
-               if ((a + b == target) == matching)]
-    return random.choice(choices)
+def make_addition(target, max_operand):
+    if random.random() < 0.5:
+        left = random.randint(max(1, target - max_operand), min(max_operand, target - 1))
+        return left, target - left
+    left, right = random.randint(1, max_operand), random.randint(1, max_operand)
+    if left + right == target:
+        right = right % max_operand + 1
+    return left, right
+
+
+class LogicalCanvas:
+    """Scale Tkinter drawings and mouse input to a fixed game coordinate system."""
+    def __init__(self, root, width, height, bg):
+        self.width, self.height = width, height
+        self.scale, self.ox, self.oy = 1, 0, 0
+        self.canvas = tk.Canvas(root, width=width, height=height, bg=bg, highlightthickness=0)
+        self.canvas.pack(fill='both', expand=True)
+        self.canvas.bind('<Configure>', self.resize)
+
+    def resize(self, event):
+        self.scale = min(event.width / self.width, event.height / self.height)
+        self.ox = (event.width - self.width * self.scale) / 2
+        self.oy = (event.height - self.height * self.scale) / 2
+
+    def bind(self, event, callback):
+        self.canvas.bind(event, lambda e: callback(type('Mouse', (), {'x': (e.x - self.ox) / self.scale})()))
+
+    def delete(self, tag):
+        self.canvas.delete(tag)
+
+    def __getattr__(self, name):
+        if not name.startswith('create_'):
+            raise AttributeError(name)
+        def create(*coords, **options):
+            scaled = [v * self.scale + (self.ox if i % 2 == 0 else self.oy) for i, v in enumerate(coords)]
+            options = dict(options)
+            if 'font' in options:
+                family, size, weight = options['font']
+                options['font'] = (family, max(1, round(size * self.scale)), weight)
+            if 'width' in options:
+                options['width'] *= self.scale
+            return getattr(self.canvas, name)(*scaled, **options)
+        return create
 
 
 class NumberCatch:
-    WIDTH, HEIGHT = 800, 640
-    BASKET_Y, BASKET_WIDTH = 550, 112
-    BG, PANEL, TEXT = "#101827", "#1d2a40", "#eaf1ff"
+    WIDTH, HEIGHT = 1000, 700
+    PLAY_RIGHT = 720
+    BASKET_Y, BASKET_WIDTH = 590, 112
+    PANEL, TEXT = '#1d2a40', '#eaf1ff'
 
     def __init__(self, root):
         self.root = root
-        root.title("Number Catch")
-        root.resizable(False, False)
-        self.canvas = tk.Canvas(root, width=self.WIDTH, height=self.HEIGHT,
-                                bg=self.BG, highlightthickness=0)
-        self.canvas.pack()
+        root.title('Number Catch — Growing Tree')
+        root.resizable(True, True)
+        if NATIVE:
+            self.canvas = tk.Canvas(root, width=self.WIDTH, height=self.HEIGHT,
+                                    bg='#111c28', highlightthickness=0)
+            self.canvas.pack()
+        else:
+            self.canvas = LogicalCanvas(root, self.WIDTH, self.HEIGHT, '#111c28')
+        self.fullscreen = False
         self.keys = set()
         self.mouse_x = None
-        root.bind("<KeyPress>", self.key_down)
-        root.bind("<KeyRelease>", lambda event: self.keys.discard(event.keysym.lower()))
-        self.canvas.bind("<Motion>", self.mouse_move)
-        root.bind("<FocusOut>", self.focus_out)
+        root.bind('<KeyPress>', self.key_down)
+        root.bind('<KeyRelease>', lambda event: self.keys.discard(event.keysym.lower()))
+        self.canvas.bind('<Motion>', self.mouse_move)
+        root.bind('<FocusOut>', self.focus_out)
         self.reset()
         self.last_time = time.perf_counter()
         self.tick()
 
     def reset(self):
         self.state = GameState()
-        self.basket_x = self.WIDTH / 2
+        self.display_growth = float(self.state.growth)
+        self.transition_time = 0
+        self.basket_x = self.PLAY_RIGHT / 2
         self.drops = []
         self.keys.clear()
         self.mouse_x = None
-        self.spawn_in = 0.4
+        self.spawn_in = 1.2
         self.paused = False
-        self.message = "Catch additions equal to the target. Let the others fall!"
-        self.message_time = 5.0
+        self.message = 'Catch matching additions to grow your tree!'
+        self.message_time = 5
+
+    def toggle_fullscreen(self):
+        self.fullscreen = not self.fullscreen
+        self.root.attributes('-fullscreen', self.fullscreen)
+        self.keys.clear()
+        self.mouse_x = None
 
     def key_down(self, event):
         key = event.keysym.lower()
-        if key in ("left", "right", "a", "d"):
+        if key in ('left', 'right', 'a', 'd'):
             self.keys.add(key)
             self.mouse_x = None
-        elif key == "space":
+        elif key == 'f11':
+            self.toggle_fullscreen()
+        elif key == 'space':
             self.paused = not self.paused
-        elif key == "r":
+        elif key == 'r':
             self.reset()
-        elif key == "escape":
-            self.root.destroy()
+        elif key == 'escape':
+            if self.fullscreen:
+                self.toggle_fullscreen()
+            else:
+                self.root.destroy()
 
     def mouse_move(self, event):
         self.mouse_x = event.x
@@ -94,87 +205,123 @@ class NumberCatch:
         self.paused = True
 
     def spawn(self):
-        left, right = make_addition(self.state.target)
-        self.drops.append({"x": random.randint(52, self.WIDTH - 52), "y": 150.0,
-                           "left": left, "right": right,
-                           "speed": random.uniform(95, 135) + min(90, (self.state.round - 1) * 7)})
+        difficulty = self.state.difficulty
+        left, right = make_addition(self.state.target, difficulty.max_operand)
+        label = f'{left}+{right}'
+        half_width = max(44, len(label) * 9 + 12)
+        self.drops.append({'x': random.randint(half_width + 8, self.PLAY_RIGHT - half_width - 8),
+                           'y': 170.0, 'left': left, 'right': right, 'half_width': half_width,
+                           'speed': random.uniform(difficulty.speed, difficulty.speed + 15)})
 
     def update(self, dt):
-        direction = int(bool(self.keys & {"right", "d"})) - int(bool(self.keys & {"left", "a"}))
-        if self.mouse_x is not None:
-            self.basket_x = self.mouse_x
-        else:
-            self.basket_x += direction * 460 * dt
+        self.message_time = max(0, self.message_time - dt)
+        if self.transition_time > 0:
+            self.transition_time = max(0, self.transition_time - dt)
+            return
+        self.display_growth += (self.state.growth - self.display_growth) * min(1, dt * 5)
+        direction = int(bool(self.keys & {'right', 'd'})) - int(bool(self.keys & {'left', 'a'}))
+        self.basket_x = self.mouse_x if self.mouse_x is not None else self.basket_x + direction * 460 * dt
         half = self.BASKET_WIDTH / 2
-        self.basket_x = max(half + 8, min(self.WIDTH - half - 8, self.basket_x))
+        self.basket_x = max(half + 8, min(self.PLAY_RIGHT - half - 8, self.basket_x))
         self.spawn_in -= dt
         if self.spawn_in <= 0:
             self.spawn()
-            self.spawn_in = max(0.45, 1.0 - self.state.round * 0.035)
-        self.message_time = max(0, self.message_time - dt)
+            self.spawn_in = self.state.difficulty.interval
         for drop in self.drops[:]:
-            previous_y = drop["y"]
-            drop["y"] += drop["speed"] * dt
-            # Test the bottom edge crossing the basket rim, not the whole basket area.
-            if previous_y + 20 <= self.BASKET_Y <= drop["y"] + 20 and abs(drop["x"] - self.basket_x) <= half:
-                self.drops.remove(drop)
-                result = self.state.catch(drop["left"], drop["right"])
-                if result == "complete":
-                    self.message = f"Correct! {self.state.last_answer}. Next target: {self.state.target}"
-                    self.message_time = 2.5
-                    self.drops.clear()
-                    self.spawn_in = 0.7
-                    break
-                if result == "wrong":
-                    self.message = f"{self.state.last_answer}, not {self.state.target}. One life lost!"
-                    self.message_time = 3
-                    self.drops.clear()
-                    self.spawn_in = 0.9
-                    break
-            elif drop["y"] > self.HEIGHT + 24:
+            previous_y = drop['y']
+            drop['y'] += drop['speed'] * dt
+            if previous_y + 20 <= self.BASKET_Y <= drop['y'] + 20 and abs(drop['x'] - self.basket_x) <= half:
+                result = self.state.catch(drop['left'], drop['right'])
+                if result == 'level_up':
+                    self.message = f'Fully grown! Welcome to level {self.state.level}.'
+                    self.display_growth, self.transition_time = TREE_FULL, 1.6
+                elif result == 'level_down':
+                    self.message = f'Try level {self.state.level} again. Your tree can regrow!'
+                    self.display_growth, self.transition_time = 0, 1.3
+                elif result == 'correct':
+                    self.message = f'{self.state.last_answer} — your tree grows!'
+                else:
+                    self.message = f'{self.state.last_answer} — tree shrinks. Target: {self.state.target}'
+                self.message_time = 3.5
+                self.drops.clear()
+                self.spawn_in = 1.0
+                break
+            elif drop['y'] > self.HEIGHT + 24:
                 self.drops.remove(drop)
 
     def text(self, x, y, text, size=16, color=None, **kwargs):
         self.canvas.create_text(x, y, text=text, fill=color or self.TEXT,
-                                font=("Segoe UI", size, "bold"), **kwargs)
+                                font=('Segoe UI', size, 'bold'), **kwargs)
+
+    def draw_tree(self):
+        c, s = self.canvas, self.state
+        x, ground = 860, 586
+        fraction = max(0, min(1, self.display_growth / TREE_FULL))
+        c.create_oval(758, ground - 14, 962, ground + 20, fill='#315844', outline='')
+        if fraction > 0.01:
+            height = 35 + 230 * fraction
+            top = ground - height
+            trunk_half = 4 + 10 * fraction
+            c.create_polygon(x - trunk_half, ground, x + trunk_half, ground,
+                             x + 4, top, x - 4, top, fill='#ac7950', outline='')
+            for direction in (-1, 1):
+                c.create_line(x, top + height * 0.6, x + direction * 49 * fraction,
+                              top + height * 0.3, fill='#ac7950', width=3 + 4 * fraction)
+            radius = 12 + 55 * fraction
+            for dx, dy, shade in [(-0.7, 0.4, '#32986c'), (0.7, 0.4, '#46b77a'),
+                                   (0, -0.2, '#63d88a')]:
+                cx, cy = x + dx * radius, top + dy * radius
+                c.create_oval(cx - radius, cy - radius, cx + radius, cy + radius,
+                              fill=shade, outline='')
+            if fraction > 0.8:
+                for dx, dy in [(-40, 0), (32, -25), (12, 35)]:
+                    cy = top + dy
+                    c.create_oval(x + dx - 7, cy - 7, x + dx + 7, cy + 7, fill='#ffcd75', outline='')
+        self.text(x, 203, 'YOUR TREE', 17, '#96e9b8')
+        self.text(x, 237, 'Correct: grow   Wrong: shrink', 10, '#c3d7cb')
+        for i in range(TREE_FULL):
+            c.create_rectangle(778 + i * 28, 625, 799 + i * 28, 636,
+                               fill='#70daa3' if self.display_growth >= i + 0.8 else '#304737', outline='')
+        self.text(x, 666, 'Grow it fully to level up!', 11, '#c3d7cb')
 
     def draw(self):
         c, s = self.canvas, self.state
-        c.delete("all")
-        c.create_rectangle(0, 0, self.WIDTH, 140, fill=self.PANEL, outline="")
-        self.text(28, 28, "NUMBER CATCH", 16, anchor="w")
-        self.text(28, 61, f"Score  {s.score}    •    Round  {s.round}", 12, "#9aabc5", anchor="w")
-        self.text(765, 30, f"Lives  {s.lives} / 3", 14, "#ffb8bd", anchor="e")
-        self.text(400, 25, "TARGET", 11, "#9aabc5")
-        self.text(400, 61, str(s.target), 34, "#78e7c1")
-        self.text(400, 108, "Catch an addition that equals the target", 15)
-        for x in range(40, self.WIDTH, 80):
-            c.create_line(x, 148, x, self.BASKET_Y - 10, fill="#152135", dash=(2, 10))
+        c.delete('all')
+        c.create_rectangle(0, 0, self.WIDTH, self.HEIGHT, fill=level_color(s.level), outline='')
+        c.create_rectangle(self.PLAY_RIGHT, 145, self.WIDTH, self.HEIGHT, fill='#192e2b', outline='')
+        c.create_rectangle(0, 0, self.WIDTH, 145, fill=self.PANEL, outline='')
+        self.text(25, 31, 'NUMBER CATCH', 17, anchor='w')
+        self.text(25, 68, f'Level {s.level}    •    Score {s.score}', 13, '#b7c9df', anchor='w')
+        self.text(360, 25, 'TARGET', 11, '#b7c9df')
+        self.text(360, 68, str(s.target), 36, '#78e7c1')
+        self.text(360, 119, 'Catch an addition equal to the target', 15)
+        self.text(860, 35, 'F11: full screen', 13, '#b7c9df')
+        self.text(860, 73, f'Numbers 1–{s.difficulty.max_operand}', 12, '#b7c9df')
         for drop in self.drops:
-            x, y = drop["x"], drop["y"]
-            c.create_rectangle(x - 44, y - 20, x + 44, y + 20, fill="#30496b", outline="#6d96c7", width=2)
+            x, y, half = drop['x'], drop['y'], drop['half_width']
+            c.create_rectangle(x - half, y - 20, x + half, y + 20, fill='#30496b', outline='#6d96c7', width=2)
             self.text(x, y - 1, f"{drop['left']}+{drop['right']}", 21)
         x, y, half = self.basket_x, self.BASKET_Y, self.BASKET_WIDTH / 2
         c.create_polygon(x - half, y, x + half, y, x + half - 12, y + 32,
-                         x - half + 12, y + 32, fill="#3aab91", outline="#78e7c1", width=3)
-        c.create_line(x - half - 3, y, x + half + 3, y, fill="#b8ffe6", width=5)
-        self.text(x, y + 15, "CATCH", 13, "#0b2530")
+                         x - half + 12, y + 32, fill='#3aab91', outline='#78e7c1', width=3)
+        c.create_line(x - half - 3, y, x + half + 3, y, fill='#b8ffe6', width=5)
+        self.text(x, y + 15, 'CATCH', 13, '#0b2530')
         if self.message_time > 0:
-            self.text(400, 169, self.message, 12, "#ffe1a0")
-        equation = s.last_answer or "Skip any addition that does not match. Missing one costs nothing."
-        self.text(400, 605, equation, 12, "#9aabc5", width=740)
-        self.text(400, 628, "← → / A D / Mouse: move     Space: pause     R: restart     Esc: quit", 10, "#9aabc5")
-        if self.paused or s.lives <= 0:
-            c.create_rectangle(145, 235, 655, 425, fill=self.PANEL, outline="#426080", width=2)
-            self.text(400, 285, "GAME OVER" if s.lives <= 0 else "PAUSED", 30)
-            self.text(400, 339, f"Final score: {s.score}" if s.lives <= 0 else "Catch additions equal to the target.", 16)
-            self.text(400, 385, "Press R to play again" if s.lives <= 0 else "Press Space to continue", 14, "#78e7c1")
+            self.text(360, 163, self.message, 12, '#ffe1a0', width=680)
+        self.text(360, 652, 'Skip unwanted additions. Missing one costs nothing.', 11, '#c3d0e2')
+        self.text(360, 682, '← → / A D / Mouse: move   Space: pause   R: restart   Esc: exit', 10, '#c3d0e2')
+        self.draw_tree()
+        if self.paused:
+            c.create_rectangle(110, 260, 610, 440, fill=self.PANEL, outline='#426080', width=2)
+            self.text(360, 310, 'PAUSED', 30)
+            self.text(360, 365, 'Grow your tree with matching additions.', 15)
+            self.text(360, 408, 'Press Space to continue', 14, '#78e7c1')
 
     def tick(self):
         now = time.perf_counter()
         dt = min(now - self.last_time, 0.05)
         self.last_time = now
-        if not self.paused and self.state.lives > 0:
+        if not self.paused:
             self.update(dt)
         self.draw()
         self.root.after(16, self.tick)
@@ -186,6 +333,5 @@ def main():
     root.mainloop()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
-
