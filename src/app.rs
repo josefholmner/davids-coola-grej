@@ -39,6 +39,9 @@ impl Application {
         self.game.clear_input();
         self.screen = Screen::Menu;
     }
+    pub fn hide_pointer(&self) -> bool {
+        self.screen == Screen::Playing && !self.game.paused && !self.game.rules.game_over
+    }
     pub fn update(&mut self, dt: f32) {
         if self.screen == Screen::Playing {
             self.game.update(dt);
@@ -71,7 +74,8 @@ impl Application {
                 _ => {}
             },
             Screen::Playing => match key {
-                32 => self.game.paused = !self.game.paused,
+                32 if !self.game.rules.game_over => self.game.paused = !self.game.paused,
+                13 if self.game.rules.game_over => self.start(self.game.rules.mode),
                 82 => self.start(self.game.rules.mode),
                 27 | 77 => self.menu(),
                 _ => {}
@@ -85,9 +89,9 @@ impl Application {
         };
         match self.screen {
             Screen::Menu => {
-                if hit(220.0, 220.0, 560.0, 100.0) {
+                if hit(220.0, 220.0, 265.0, 220.0) {
                     self.start(Mode::Math);
-                } else if hit(220.0, 345.0, 560.0, 100.0) {
+                } else if hit(515.0, 220.0, 265.0, 220.0) {
                     self.start(Mode::Reading);
                 } else if hit(300.0, 480.0, 400.0, 62.0) {
                     self.screen = Screen::Settings;
@@ -105,7 +109,11 @@ impl Application {
                 }
             }
             Screen::Playing => {
-                if hit(25.0, 100.0, 140.0, 34.0) {
+                if self.game.rules.game_over && hit(175.0, 440.0, 175.0, 50.0) {
+                    self.start(self.game.rules.mode);
+                } else if self.game.rules.game_over && hit(370.0, 440.0, 175.0, 50.0) {
+                    self.menu();
+                } else if hit(25.0, 100.0, 140.0, 34.0) {
                     self.menu();
                 }
             }
@@ -129,9 +137,15 @@ mod tests {
         assert_eq!(app.game.rules.mode, Mode::Math);
         app.key(27);
         assert_eq!(app.screen, Screen::Menu);
-        app.key(50);
+        app.click(650.0, 320.0);
         assert_eq!(app.game.rules.mode, Mode::Reading);
         assert_eq!(app.screen, Screen::Playing);
+        app.key(27);
+        app.key(49);
+        assert_eq!(app.game.rules.mode, Mode::Math);
+        app.key(27);
+        app.key(50);
+        assert_eq!(app.game.rules.mode, Mode::Reading);
     }
     #[test]
     fn settings_changes_both_modes() {
@@ -153,5 +167,26 @@ mod tests {
         app.update(1.0);
         assert_eq!(app.game.spawn_in, 1.2);
         assert!(app.game.drops.is_empty());
+    }
+    #[test]
+    fn pointer_is_visible_in_menus_pause_and_game_over() {
+        let mut app = Application::new(Language::Swedish);
+        assert!(!app.hide_pointer());
+        app.start(Mode::Math);
+        assert!(app.hide_pointer());
+        app.key(32);
+        assert!(!app.hide_pointer());
+        app.key(32);
+        assert!(app.hide_pointer());
+        app.game.rules.game_over = true;
+        app.game.rules.growth = 0;
+        assert!(!app.hide_pointer());
+        app.key(13);
+        assert!(!app.game.rules.game_over);
+        assert_eq!(app.game.rules.growth, 2);
+        assert!(app.hide_pointer());
+        app.game.rules.game_over = true;
+        app.click(450.0, 465.0);
+        assert_eq!(app.screen, Screen::Menu);
     }
 }

@@ -838,5 +838,705 @@
     "english": "balloon",
     "subject": "one round red balloon with a tied end and curling string",
     "image": "balloon.png"
+  },
+  {
+    "id": 120,
+    "swedish": "kompass",
+    "english": "compass",
+    "subject": "one round navigation compass with a red and white needle, tick marks, and no letters",
+    "image": "compass.png"
+  },
+  {
+    "id": 121,
+    "swedish": "nudlar",
+    "english": "noodles",
+    "subject": "a bowl of long curled noodles",
+    "image": "noodles.png"
+  },
+  {
+    "id": 122,
+    "swedish": "mjölk",
+    "english": "milk",
+    "subject": "a clear glass filled with white milk",
+    "image": "milk.png"
+  },
+  {
+    "id": 123,
+    "swedish": "smör",
+    "english": "butter",
+    "subject": "a golden yellow block of butter on a plain small dish",
+    "image": "butter.png"
+  },
+  {
+    "id": 124,
+    "swedish": "bär",
+    "english": "berry",
+    "subject": "a small cluster of ripe red berries",
+    "image": "berry.png"
+  },
+  {
+    "id": 125,
+    "swedish": "alpacka",
+    "english": "alpaca",
+    "subject": "one fluffy light brown alpaca with a rounded woolly head and short upright ears",
+    "image": "alpaca.png"
+  },
+  {
+    "id": 126,
+    "swedish": "spenat",
+    "english": "spinach",
+    "subject": "a small bunch of fresh dark green spinach leaves",
+    "image": "spinach.png"
+  },
+  {
+    "id": 127,
+    "swedish": "juice",
+    "english": "juice",
+    "subject": "a clear glass filled with orange juice",
+    "image": "juice.png"
+  },
+  {
+    "id": 128,
+    "swedish": "böna",
+    "english": "bean",
+    "subject": "one large red kidney bean",
+    "image": "bean.png"
+  },
+  {
+    "id": 129,
+    "swedish": "ärt",
+    "english": "pea",
+    "subject": "one open green pea pod with round peas",
+    "image": "pea.png"
+  },
+  {
+    "id": 130,
+    "swedish": "abborre",
+    "english": "perch",
+    "subject": "one striped green perch fish with a spiny dorsal fin and orange fins",
+    "image": "perch.png"
+  },
+  {
+    "id": 131,
+    "swedish": "sallad",
+    "english": "salad",
+    "subject": "a bowl of leafy green salad with a few tomato pieces",
+    "image": "salad.png"
+  },
+  {
+    "id": 132,
+    "swedish": "soppa",
+    "english": "soup",
+    "subject": "a simple bowl of warm vegetable soup",
+    "image": "soup.png"
+  },
+  {
+    "id": 133,
+    "swedish": "glas",
+    "english": "glass",
+    "subject": "one empty clear drinking glass",
+    "image": "glass.png"
+  },
+  {
+    "id": 134,
+    "swedish": "nöt",
+    "english": "nut",
+    "subject": "one brown hazelnut and its cracked half",
+    "image": "nut.png"
+  },
+  {
+    "id": 135,
+    "swedish": "tonfisk",
+    "english": "tuna",
+    "subject": "one streamlined blue and silver tuna fish with yellow finlets",
+    "image": "tuna.png"
+  },
+  {
+    "id": 136,
+    "swedish": "våffla",
+    "english": "waffle",
+    "subject": "one golden waffle with a clear square grid pattern",
+    "image": "waffle.png"
+  },
+  {
+    "id": 137,
+    "swedish": "kokos",
+    "english": "coconut",
+    "subject": "a brown coconut and its cut half showing white flesh",
+    "image": "coconut.png"
+  },
+  {
+    "id": 138,
+    "swedish": "kopp",
+    "english": "cup",
+    "subject": "one blue teacup with a handle",
+    "image": "cup.png"
+  },
+  {
+    "id": 139,
+    "swedish": "kex",
+    "english": "cracker",
+    "subject": "one square golden cracker with small holes",
+    "image": "cracker.png"
+  },
+  {
+    "id": 140,
+    "swedish": "bricka",
+    "english": "tray",
+    "subject": "one plain rectangular serving tray with raised edges and handles",
+    "image": "tray.png"
+  },
+  {
+    "id": 141,
+    "swedish": "pasta",
+    "english": "pasta",
+    "subject": "a small pile of dry curved elbow pasta",
+    "image": "pasta.png"
+  },
+  {
+    "id": 142,
+    "swedish": "skål",
+    "english": "bowl",
+    "subject": "one empty round green bowl",
+    "image": "bowl.png"
+  },
+  {
+    "id": 143,
+    "swedish": "ris",
+    "english": "rice",
+    "subject": "a small white bowl filled with cooked white rice",
+    "image": "rice.png"
+  },
+  {
+    "id": 144,
+    "swedish": "gaffel",
+    "english": "fork",
+    "subject": "one silver dining fork with four tines",
+    "image": "fork.png"
+  },
+  {
+    "id": 145,
+    "swedish": "kanna",
+    "english": "jug",
+    "subject": "one blue ceramic jug with a handle and pouring spout",
+    "image": "jug.png"
+  },
+  {
+    "id": 146,
+    "swedish": "sked",
+    "english": "spoon",
+    "subject": "one silver spoon",
+    "image": "spoon.png"
+  },
+  {
+    "id": 147,
+    "swedish": "kam",
+    "english": "comb",
+    "subject": "one simple brown comb with clearly separated teeth",
+    "image": "comb.png"
+  },
+  {
+    "id": 148,
+    "swedish": "flaska",
+    "english": "bottle",
+    "subject": "one green glass bottle with a cork and no label",
+    "image": "bottle.png"
+  },
+  {
+    "id": 149,
+    "swedish": "väska",
+    "english": "bag",
+    "subject": "one colorful school bag with a handle and shoulder straps",
+    "image": "bag.png"
+  },
+  {
+    "id": 150,
+    "swedish": "kniv",
+    "english": "knife",
+    "subject": "one simple rounded table knife with a wooden handle",
+    "image": "knife.png"
+  },
+  {
+    "id": 151,
+    "swedish": "sko",
+    "english": "shoe",
+    "subject": "one red sneaker with white laces",
+    "image": "shoe.png"
+  },
+  {
+    "id": 152,
+    "swedish": "borste",
+    "english": "brush",
+    "subject": "one wooden hairbrush with visible short bristles",
+    "image": "brush.png"
+  },
+  {
+    "id": 153,
+    "swedish": "kvast",
+    "english": "broom",
+    "subject": "one straw broom with a long wooden handle",
+    "image": "broom.png"
+  },
+  {
+    "id": 154,
+    "swedish": "dörr",
+    "english": "door",
+    "subject": "one closed red door in its frame with a golden handle",
+    "image": "door.png"
+  },
+  {
+    "id": 155,
+    "swedish": "såg",
+    "english": "saw",
+    "subject": "one hand saw with a wooden handle and a toothed metal blade",
+    "image": "saw.png"
+  },
+  {
+    "id": 156,
+    "swedish": "stövel",
+    "english": "boot",
+    "subject": "one yellow rubber rain boot",
+    "image": "boot.png"
+  },
+  {
+    "id": 157,
+    "swedish": "mössa",
+    "english": "beanie",
+    "subject": "one knitted blue winter beanie with a pom-pom",
+    "image": "beanie.png"
+  },
+  {
+    "id": 158,
+    "swedish": "sudd",
+    "english": "eraser",
+    "subject": "one pink rectangular pencil eraser",
+    "image": "eraser.png"
+  },
+  {
+    "id": 159,
+    "swedish": "arm",
+    "english": "arm",
+    "subject": "one simple friendly cartoon human arm bent slightly at the elbow, isolated educational body-part picture",
+    "image": "arm.png"
+  },
+  {
+    "id": 160,
+    "swedish": "pussel",
+    "english": "puzzle",
+    "subject": "one small partially completed jigsaw puzzle with a loose matching piece",
+    "image": "puzzle.png"
+  },
+  {
+    "id": 161,
+    "swedish": "socka",
+    "english": "sock",
+    "subject": "one striped wool sock",
+    "image": "sock.png"
+  },
+  {
+    "id": 162,
+    "swedish": "tvål",
+    "english": "soap",
+    "subject": "one rounded bar of pale pink soap with a few bubbles",
+    "image": "soap.png"
+  },
+  {
+    "id": 163,
+    "swedish": "ben",
+    "english": "leg",
+    "subject": "one simple cartoon human leg from the upper thigh to the foot, isolated educational body-part picture",
+    "image": "leg.png"
+  },
+  {
+    "id": 164,
+    "swedish": "gitarr",
+    "english": "guitar",
+    "subject": "one wooden acoustic guitar with six strings",
+    "image": "guitar.png"
+  },
+  {
+    "id": 165,
+    "swedish": "tröja",
+    "english": "sweater",
+    "subject": "one red knitted sweater with long sleeves",
+    "image": "sweater.png"
+  },
+  {
+    "id": 166,
+    "swedish": "hink",
+    "english": "bucket",
+    "subject": "one blue bucket with a curved handle",
+    "image": "bucket.png"
+  },
+  {
+    "id": 167,
+    "swedish": "fot",
+    "english": "foot",
+    "subject": "one simple bare cartoon foot viewed from the side with toes visible, isolated educational body-part picture",
+    "image": "foot.png"
+  },
+  {
+    "id": 168,
+    "swedish": "trumma",
+    "english": "drum",
+    "subject": "one red cylindrical toy drum with two drumsticks",
+    "image": "drum.png"
+  },
+  {
+    "id": 169,
+    "swedish": "jacka",
+    "english": "jacket",
+    "subject": "one blue jacket with a zipper and two pockets",
+    "image": "jacket.png"
+  },
+  {
+    "id": 170,
+    "swedish": "hatt",
+    "english": "hat",
+    "subject": "one brown brimmed hat",
+    "image": "hat.png"
+  },
+  {
+    "id": 171,
+    "swedish": "öra",
+    "english": "ear",
+    "subject": "one simple cartoon human ear, isolated educational body-part picture",
+    "image": "ear.png"
+  },
+  {
+    "id": 172,
+    "swedish": "kamera",
+    "english": "camera",
+    "subject": "one compact blue camera with a round lens",
+    "image": "camera.png"
+  },
+  {
+    "id": 173,
+    "swedish": "byxor",
+    "english": "pants",
+    "subject": "one pair of blue trousers",
+    "image": "pants.png"
+  },
+  {
+    "id": 174,
+    "swedish": "kjol",
+    "english": "skirt",
+    "subject": "one simple purple skirt",
+    "image": "skirt.png"
+  },
+  {
+    "id": 175,
+    "swedish": "öga",
+    "english": "eye",
+    "subject": "one simple friendly cartoon human eye with a blue iris, isolated educational body-part picture",
+    "image": "eye.png"
+  },
+  {
+    "id": 176,
+    "swedish": "hjärta",
+    "english": "heart",
+    "subject": "one simple bright red heart symbol",
+    "image": "heart.png"
+  },
+  {
+    "id": 177,
+    "swedish": "vante",
+    "english": "mitten",
+    "subject": "one knitted red mitten with a clear separate thumb",
+    "image": "mitten.png"
+  },
+  {
+    "id": 178,
+    "swedish": "boll",
+    "english": "ball",
+    "subject": "one round colorful striped ball",
+    "image": "ball.png"
+  },
+  {
+    "id": 179,
+    "swedish": "mun",
+    "english": "mouth",
+    "subject": "one simple smiling cartoon mouth with lips, isolated educational body-part picture",
+    "image": "mouth.png"
+  },
+  {
+    "id": 180,
+    "swedish": "flagga",
+    "english": "flag",
+    "subject": "one bright blue flag on a short flagpole",
+    "image": "flag.png"
+  },
+  {
+    "id": 181,
+    "swedish": "bälte",
+    "english": "belt",
+    "subject": "one brown leather belt with a silver buckle",
+    "image": "belt.png"
+  },
+  {
+    "id": 182,
+    "swedish": "fiol",
+    "english": "violin",
+    "subject": "one brown violin with its bow",
+    "image": "violin.png"
+  },
+  {
+    "id": 183,
+    "swedish": "get",
+    "english": "goat",
+    "subject": "one white goat with small horns and a little beard",
+    "image": "goat.png"
+  },
+  {
+    "id": 184,
+    "swedish": "ankare",
+    "english": "anchor",
+    "subject": "one dark blue ship anchor",
+    "image": "anchor.png"
+  },
+  {
+    "id": 185,
+    "swedish": "hjälm",
+    "english": "helmet",
+    "subject": "one blue bicycle helmet with a chin strap",
+    "image": "helmet.png"
+  },
+  {
+    "id": 186,
+    "swedish": "ring",
+    "english": "ring",
+    "subject": "one golden finger ring with a small blue jewel",
+    "image": "ring.png"
+  },
+  {
+    "id": 187,
+    "swedish": "mås",
+    "english": "gull",
+    "subject": "one white and gray seagull with a yellow beak",
+    "image": "gull.png"
+  },
+  {
+    "id": 188,
+    "swedish": "magnet",
+    "english": "magnet",
+    "subject": "one red and blue horseshoe magnet",
+    "image": "magnet.png"
+  },
+  {
+    "id": 189,
+    "swedish": "docka",
+    "english": "doll",
+    "subject": "one friendly toy doll with yarn hair and a simple dress",
+    "image": "doll.png"
+  },
+  {
+    "id": 190,
+    "swedish": "spik",
+    "english": "nail",
+    "subject": "one silver metal nail with a flat head and pointed end",
+    "image": "nail.png"
+  },
+  {
+    "id": 191,
+    "swedish": "lax",
+    "english": "salmon",
+    "subject": "one silver salmon fish with a pinkish side",
+    "image": "salmon.png"
+  },
+  {
+    "id": 192,
+    "swedish": "strand",
+    "english": "beach",
+    "subject": "one small sunny sandy beach with a blue water edge, no people or buildings",
+    "image": "beach.png"
+  },
+  {
+    "id": 193,
+    "swedish": "nalle",
+    "english": "teddy",
+    "subject": "one stuffed teddy bear with fabric seams and a bow, clearly a toy",
+    "image": "teddy.png"
+  },
+  {
+    "id": 194,
+    "swedish": "däck",
+    "english": "tire",
+    "subject": "one black rubber car tire without a wheel rim",
+    "image": "tire.png"
+  },
+  {
+    "id": 195,
+    "swedish": "struts",
+    "english": "ostrich",
+    "subject": "one black and white ostrich with a long neck and long bare legs",
+    "image": "ostrich.png"
+  },
+  {
+    "id": 196,
+    "swedish": "drake",
+    "english": "kite",
+    "subject": "one colorful diamond-shaped flying kite with a bow-tie tail",
+    "image": "kite.png"
+  },
+  {
+    "id": 197,
+    "swedish": "gräs",
+    "english": "grass",
+    "subject": "one small tuft of fresh green grass",
+    "image": "grass.png"
+  },
+  {
+    "id": 198,
+    "swedish": "kalkon",
+    "english": "turkey",
+    "subject": "one brown turkey bird with a large fanned tail and a red wattle",
+    "image": "turkey.png"
+  },
+  {
+    "id": 199,
+    "swedish": "piano",
+    "english": "piano",
+    "subject": "one small black upright piano with white and black keys",
+    "image": "piano.png"
+  },
+  {
+    "id": 200,
+    "swedish": "regn",
+    "english": "rain",
+    "subject": "a simple small cloud with clearly visible falling blue raindrops",
+    "image": "rain.png"
+  },
+  {
+    "id": 201,
+    "swedish": "sardin",
+    "english": "sardine",
+    "subject": "one small shiny silver sardine fish",
+    "image": "sardine.png"
+  },
+  {
+    "id": 202,
+    "swedish": "dator",
+    "english": "laptop",
+    "subject": "one open laptop computer with a plain blue screen and no writing",
+    "image": "laptop.png"
+  },
+  {
+    "id": 203,
+    "swedish": "flod",
+    "english": "river",
+    "subject": "a winding blue river between simple green banks, no buildings or boats",
+    "image": "river.png"
+  },
+  {
+    "id": 204,
+    "swedish": "hummer",
+    "english": "lobster",
+    "subject": "one red lobster with two large claws and a long segmented tail",
+    "image": "lobster.png"
+  },
+  {
+    "id": 205,
+    "swedish": "robot",
+    "english": "robot",
+    "subject": "one friendly small metal toy robot",
+    "image": "robot.png"
+  },
+  {
+    "id": 206,
+    "swedish": "näsa",
+    "english": "nose",
+    "subject": "one simple cartoon human nose viewed three-quarter from the side, isolated educational body-part picture",
+    "image": "nose.png"
+  },
+  {
+    "id": 207,
+    "swedish": "korall",
+    "english": "coral",
+    "subject": "one branching orange coral",
+    "image": "coral.png"
+  },
+  {
+    "id": 208,
+    "swedish": "krona",
+    "english": "crown",
+    "subject": "one golden royal crown with colorful jewels",
+    "image": "crown.png"
+  },
+  {
+    "id": 209,
+    "swedish": "tand",
+    "english": "tooth",
+    "subject": "one clean white molar tooth, no face or eyes",
+    "image": "tooth.png"
+  },
+  {
+    "id": 210,
+    "swedish": "tulpan",
+    "english": "tulip",
+    "subject": "one red tulip flower on a green stem with two long leaves",
+    "image": "tulip.png"
+  },
+  {
+    "id": 211,
+    "swedish": "pirat",
+    "english": "pirate",
+    "subject": "one friendly cartoon pirate wearing a tricorn hat and an eye patch, no weapon",
+    "image": "pirate.png"
+  },
+  {
+    "id": 212,
+    "swedish": "mask",
+    "english": "worm",
+    "subject": "one pink earthworm curved gently on a little patch of brown soil",
+    "image": "worm.png"
+  },
+  {
+    "id": 213,
+    "swedish": "kaktus",
+    "english": "cactus",
+    "subject": "one green cactus with two arms and short visible spines",
+    "image": "cactus.png"
+  },
+  {
+    "id": 214,
+    "swedish": "svärd",
+    "english": "sword",
+    "subject": "one harmless toy sword with a golden hilt",
+    "image": "sword.png"
+  },
+  {
+    "id": 215,
+    "swedish": "duva",
+    "english": "pigeon",
+    "subject": "one gray pigeon with an iridescent green neck",
+    "image": "pigeon.png"
+  },
+  {
+    "id": 216,
+    "swedish": "spade",
+    "english": "shovel",
+    "subject": "one small garden shovel with a wooden handle",
+    "image": "shovel.png"
+  },
+  {
+    "id": 217,
+    "swedish": "falk",
+    "english": "falcon",
+    "subject": "one brown falcon bird with pointed wings, a hooked beak and dark cheek markings",
+    "image": "falcon.png"
+  },
+  {
+    "id": 218,
+    "swedish": "skruv",
+    "english": "screw",
+    "subject": "one silver screw with clear spiral threads and a slotted head",
+    "image": "screw.png"
+  },
+  {
+    "id": 219,
+    "swedish": "åsna",
+    "english": "donkey",
+    "subject": "one gray donkey with long ears and a dark short mane",
+    "image": "donkey.png"
   }
 ]

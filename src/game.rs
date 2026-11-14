@@ -82,9 +82,9 @@ impl Difficulty {
     }
     pub fn speed(self) -> f32 {
         if self.subtraction() {
-            (50.0 + (self.0 / 3 - 1) as f32 * 4.0).min(180.0)
+            (32.0 + (self.0 / 3 - 1) as f32 * 4.0).min(150.0)
         } else {
-            (65.0 + (self.0 - 1) as f32 * 5.0).min(280.0)
+            (45.0 + (self.0 - 1) as f32 * 5.0).min(240.0)
         }
     }
     pub fn interval(self) -> f32 {
@@ -232,7 +232,7 @@ pub enum Outcome {
     Correct,
     Wrong,
     LevelUp,
-    LevelDown,
+    GameOver,
 }
 pub struct Rules {
     pub mode: Mode,
@@ -243,6 +243,7 @@ pub struct Rules {
     pub target_word: usize,
     pub score: u64,
     pub last_answer: String,
+    pub game_over: bool,
 }
 impl Rules {
     #[cfg(test)]
@@ -259,6 +260,7 @@ impl Rules {
             target_word: 0,
             score: 0,
             last_answer: String::new(),
+            game_over: false,
         };
         state.new_target(rng);
         state
@@ -288,11 +290,17 @@ impl Rules {
         self.target = target;
     }
     pub fn catch(&mut self, problem: Problem, rng: &mut Rng) -> Outcome {
+        if self.game_over {
+            return Outcome::GameOver;
+        }
         let answer = problem.answer();
         self.last_answer = format!("{} = {}", problem.label(), answer);
         self.apply_match(answer == self.target, self.target as u64 * 10, rng)
     }
     pub fn catch_word(&mut self, index: usize, rng: &mut Rng) -> Outcome {
+        if self.game_over {
+            return Outcome::GameOver;
+        }
         self.last_answer = WORDS[index].text(self.language).into();
         self.apply_match(
             index == self.target_word,
@@ -316,13 +324,9 @@ impl Rules {
         }
         self.growth -= 1;
         if self.growth <= 0 {
-            if self.level > 1 {
-                self.level -= 1;
-                self.growth = 3;
-                self.new_target(rng);
-                return Outcome::LevelDown;
-            }
-            self.growth = 1;
+            self.growth = 0;
+            self.game_over = true;
+            return Outcome::GameOver;
         }
         Outcome::Wrong
     }
@@ -555,6 +559,10 @@ impl Game {
         }
         self.animation += dt;
         self.message_time = (self.message_time - dt).max(0.0);
+        if self.rules.game_over {
+            self.display_growth += (0.0 - self.display_growth) * (dt * 5.0).min(1.0);
+            return;
+        }
         if self.transition > 0.0 {
             self.transition = (self.transition - dt).max(0.0);
             return;
@@ -618,15 +626,14 @@ impl Game {
                     self.display_growth = FULL as f32;
                     self.transition = 1.6;
                 }
-                Outcome::LevelDown => {
-                    self.message = format!(
-                        "{} {}. {}",
-                        language.text("Tillbaka till nivå", "Back to level"),
-                        self.rules.level,
-                        language.text("Ditt träd kan växa igen!", "Your tree can regrow!")
-                    );
-                    self.display_growth = 0.0;
-                    self.transition = 1.3;
+                Outcome::GameOver => {
+                    self.message = language
+                        .text(
+                            "Trädet krympte helt. Spelet är slut!",
+                            "The tree has shrunk away. Game over!",
+                        )
+                        .into();
+                    self.transition = 0.0;
                 }
                 Outcome::Correct => {
                     self.message = format!(
@@ -712,36 +719,53 @@ mod tests {
         assert!((1..=2).contains(&s.target));
     }
     #[test]
-    fn empty_tree_returns() {
-        let mut s = state(4, 1, 8);
-        assert_eq!(
-            s.catch(
-                Problem {
-                    left: 1,
-                    right: 1,
-                    op: Op::Add
-                },
-                &mut Rng::seeded(7)
-            ),
-            Outcome::LevelDown
-        );
-        assert_eq!((s.level, s.growth), (3, 3));
-        assert!((1..=2).contains(&s.target));
+    fn empty_tree_ends_game_at_every_level() {
+        for level in [1, 3, 4, 12] {
+            let mut state = state(level, 1, 5);
+            let mut rng = Rng::seeded(7);
+            assert_eq!(
+                state.catch(
+                    Problem {
+                        left: 1,
+                        right: 1,
+                        op: Op::Add
+                    },
+                    &mut rng
+                ),
+                Outcome::GameOver
+            );
+            assert!(state.game_over);
+            assert_eq!((state.level, state.growth, state.score), (level, 0, 0));
+            assert_eq!(
+                state.catch(
+                    Problem {
+                        left: 2,
+                        right: 3,
+                        op: Op::Add
+                    },
+                    &mut rng
+                ),
+                Outcome::GameOver
+            );
+            assert_eq!((state.level, state.growth, state.score), (level, 0, 0));
+        }
     }
     #[test]
-    fn level_one_keeps_seedling() {
-        let mut s = state(1, 1, 5);
-        for _ in 0..20 {
-            s.catch(
-                Problem {
-                    left: 1,
-                    right: 1,
-                    op: Op::Add,
-                },
-                &mut Rng::seeded(7),
-            );
-        }
-        assert_eq!((s.level, s.growth), (1, 1));
+    fn game_over_freezes_falling_and_reading_rules() {
+        let mut game = Game::for_mode(Mode::Reading, Language::Swedish);
+        let wrong = vocabulary::pool(1, Language::Swedish)
+            .into_iter()
+            .find(|id| *id != game.rules.target_word)
+            .unwrap();
+        game.rules.growth = 1;
+        assert_eq!(
+            game.rules.catch_word(wrong, &mut game.rng),
+            Outcome::GameOver
+        );
+        game.spawn_in = 0.0;
+        game.update(1.0);
+        assert!(game.drops.is_empty());
+        assert_eq!(game.rules.growth, 0);
     }
     #[test]
     fn only_every_third_level_subtracts() {
@@ -985,6 +1009,38 @@ mod tests {
         for _ in 0..10 {
             let p = game.correct_problem(Difficulty(3));
             assert_eq!((p.left, p.right), (3, 1));
+        }
+    }
+    #[test]
+    fn falling_distance_is_consistent_across_frame_rates() {
+        for hz in [30, 60, 120, 144] {
+            let mut game = Game::for_mode(Mode::Reading, Language::Swedish);
+            game.spawn_in = 999.0;
+            game.drops.push(Drop {
+                x: 100.0,
+                y: 305.0,
+                half_width: 48.0,
+                speed: 80.0,
+                content: Content::Word(game.rules.target_word),
+            });
+            for _ in 0..hz * 2 {
+                game.update(1.0 / hz as f32);
+            }
+            assert!((game.drops[0].y - 465.0).abs() < 0.01);
+        }
+    }
+    #[test]
+    fn math_rain_has_lower_bases_and_keeps_progressing() {
+        assert_eq!(Difficulty(1).speed(), 45.0);
+        assert_eq!(Difficulty(3).speed(), 32.0);
+        assert!(Difficulty(2).speed() > Difficulty(1).speed());
+        assert!(Difficulty(6).speed() > Difficulty(3).speed());
+        assert_eq!(Difficulty(1).reading_speed(), 57.0);
+        let mut game = Game::for_mode(Mode::Math, Language::Swedish);
+        for _ in 0..100 {
+            game.spawn();
+            let speed = game.drops.last().unwrap().speed;
+            assert!((45.0..=55.0).contains(&speed));
         }
     }
 }

@@ -4,6 +4,7 @@ mod audio;
 mod game;
 mod language;
 mod render;
+mod timing;
 mod vocabulary;
 mod win32;
 use app::{Action, Application, Screen};
@@ -30,6 +31,7 @@ struct Host {
     events: VecDeque<Event>,
     redraw: bool,
     closed: bool,
+    hide_cursor: bool,
 }
 unsafe extern "system" fn window_proc(
     hwnd: Hwnd,
@@ -45,7 +47,6 @@ unsafe extern "system" fn window_proc(
         if !pointer.is_null() {
             (*pointer).closed = true;
         }
-        KillTimer(hwnd, 1);
         PostQuitMessage(0);
         return 0;
     }
@@ -64,15 +65,15 @@ unsafe extern "system" fn window_proc(
     }
     let host = &mut *pointer;
     match message {
+        0x0020 if host.hide_cursor && (lparam & 0xffff) == 1 => {
+            SetCursor(NULL);
+            1
+        }
         0x000f => {
             let mut paint: PaintStruct = std::mem::zeroed();
             BeginPaint(hwnd, &mut paint);
             EndPaint(hwnd, &paint);
             host.redraw = true;
-            0
-        }
-        0x0113 => {
-            host.events.push_back(Event::Tick);
             0
         }
         0x0100 | 0x0101 => {
@@ -185,6 +186,23 @@ fn client_rect(hwnd: Hwnd) -> Rect {
         r
     }
 }
+fn cursor_in_client(hwnd: Hwnd) -> bool {
+    unsafe {
+        let mut point = Point::default();
+        if GetCursorPos(&mut point) == 0 || ScreenToClient(hwnd, &mut point) == 0 {
+            return false;
+        }
+        let rect = client_rect(hwnd);
+        point.x >= 0 && point.y >= 0 && point.x < rect.right && point.y < rect.bottom
+    }
+}
+fn cursor_is_visible() -> bool {
+    unsafe {
+        let mut info: CursorInfo = std::mem::zeroed();
+        info.size = std::mem::size_of::<CursorInfo>() as u32;
+        GetCursorInfo(&mut info) != 0 && info.flags & 1 != 0
+    }
+}
 fn apply_action(
     action: Action,
     app: &mut Application,
@@ -269,6 +287,7 @@ fn run_window(smoke: Option<&str>) -> Result<(), String> {
             events: VecDeque::new(),
             redraw: true,
             closed: false,
+            hide_cursor: false,
         });
         SetWindowLongPtrW(hwnd, -21, (&mut *host as *mut Host) as isize);
         let audio = audio::Audio::new();
@@ -286,6 +305,7 @@ fn run_window(smoke: Option<&str>) -> Result<(), String> {
         let mut held = HashSet::new();
         let mut last_time = Instant::now();
         let mut smoke_ticks = 0;
+        let mut frame_times = Vec::<f64>::new();
         let initial = client_rect(hwnd);
         let mut full_size = (0, 0);
         let mut restored_size = (0, 0);
@@ -293,6 +313,10 @@ fn run_window(smoke: Option<&str>) -> Result<(), String> {
         let mut min_gdi = u32::MAX;
         let mut max_gdi = 0;
         let mut modes_verified = false;
+        let mut cursor_hidden_verified = false;
+        let mut cursor_visible_verified = false;
+        let mut game_over_verified = false;
+        let mut restart_verified = false;
         let mut fullscreen_covered = false;
         let mut restored_z_order = false;
         let mut sounds_requested = 0usize;
@@ -305,31 +329,38 @@ fn run_window(smoke: Option<&str>) -> Result<(), String> {
             ShowWindow(hwnd, 4);
         }
         UpdateWindow(hwnd);
-        if SetTimer(hwnd, 1, 16, NULL) == 0 {
-            DestroyWindow(hwnd);
-            return Err(error("Starting the animation clock"));
-        }
+        let mut frame_pacer = timing::FramePacer::new(hwnd);
         let mut msg: Msg = std::mem::zeroed();
         let mut failure = None;
-        loop {
-            let result = GetMessageW(&mut msg, NULL, 0, 0);
-            if result <= 0 {
-                if result < 0 {
-                    failure = Some(error("Reading window events"));
+        'frames: loop {
+            // Drain input before updating once. Windows timer messages are low
+            // priority and can otherwise make animation cadence uneven.
+            for _ in 0..256 {
+                if PeekMessageW(&mut msg, NULL, 0, 0, 1) == 0 {
+                    break;
                 }
-                break;
+                if msg.message == 0x0012 {
+                    break 'frames;
+                }
+                TranslateMessage(&msg);
+                DispatchMessageW(&msg);
+                if host.closed {
+                    break 'frames;
+                }
             }
-            TranslateMessage(&msg);
-            DispatchMessageW(&msg);
             if host.closed {
                 break;
             }
+            host.events.push_back(Event::Tick);
             let events: Vec<Event> = host.events.drain(..).collect();
             let mut quit = false;
             for event in events {
                 match event {
                     Event::Tick => {
                         let now = Instant::now();
+                        if smoke.is_some() && smoke_ticks > 55 {
+                            frame_times.push((now - last_time).as_secs_f64() * 1000.0);
+                        }
                         let dt = (now - last_time).as_secs_f32().min(0.05);
                         last_time = now;
                         app.game.left = held.contains(&37) || held.contains(&65);
@@ -359,6 +390,10 @@ fn run_window(smoke: Option<&str>) -> Result<(), String> {
                                         y: rect.bottom - 2,
                                     }) == hwnd;
                             }
+                            if smoke_ticks == 12 {
+                                cursor_hidden_verified = host.hide_cursor
+                                    && (!cursor_in_client(hwnd) || !cursor_is_visible());
+                            }
                             if smoke_ticks == 20 {
                                 full.toggle(hwnd)?;
                                 let r = client_rect(hwnd);
@@ -369,6 +404,10 @@ fn run_window(smoke: Option<&str>) -> Result<(), String> {
                                 app.menu();
                                 app.key(83);
                                 app.key(69);
+                            }
+                            if smoke_ticks == 26 {
+                                cursor_visible_verified = !host.hide_cursor
+                                    && (!cursor_in_client(hwnd) || cursor_is_visible());
                             }
                             if smoke_ticks == 28 {
                                 app.key(27);
@@ -386,7 +425,10 @@ fn run_window(smoke: Option<&str>) -> Result<(), String> {
                                 app.game.rules.level = 3;
                                 app.game.rules.new_target(&mut app.game.rng);
                             }
-                            if smoke_ticks == 45 || smoke_ticks == 49 {
+                            if smoke_ticks == 45 || smoke_ticks == 49 || smoke_ticks == 60 {
+                                if smoke_ticks == 60 {
+                                    app.game.rules.growth = 1;
+                                }
                                 app.game.paused = false;
                                 let correct = smoke_ticks == 45;
                                 let mut problem = game::make_problem(
@@ -410,6 +452,20 @@ fn run_window(smoke: Option<&str>) -> Result<(), String> {
                                     content: Content::Math(problem),
                                 });
                             }
+                            if smoke_ticks == 62 {
+                                game_over_verified = app.game.rules.game_over
+                                    && app.game.rules.level == 3
+                                    && app.game.rules.growth == 0
+                                    && !host.hide_cursor;
+                            }
+                            if smoke_ticks == 70 {
+                                app.key(13);
+                            }
+                            if smoke_ticks == 71 {
+                                restart_verified = !app.game.rules.game_over
+                                    && app.game.rules.level == 1
+                                    && host.hide_cursor;
+                            }
                             if smoke_ticks > 55 {
                                 let n = GetGuiResources(GetCurrentProcess(), 0);
                                 min_gdi = min_gdi.min(n);
@@ -424,7 +480,11 @@ fn run_window(smoke: Option<&str>) -> Result<(), String> {
                                     && fullscreen_covered
                                     && restored_z_order
                                     && icon_loaded
-                                    && sounds_requested == 2
+                                    && sounds_requested == 3
+                                    && cursor_hidden_verified
+                                    && cursor_visible_verified
+                                    && game_over_verified
+                                    && restart_verified
                                     && modes_verified
                                     && full_size.0 > 0
                                     && full_size.1 > 0
@@ -433,6 +493,16 @@ fn run_window(smoke: Option<&str>) -> Result<(), String> {
                                     && max_gdi - min_gdi < 4;
                                 let text=format!("{{\n  \"passed\": {passed},\n  \"menu_settings_and_both_modes\": {modes_verified},\n  \"per_monitor_v2\": {aware},\n  \"window\": [{}, {}],\n  \"fullscreen\": [{}, {}],\n  \"restored\": [{}, {}],\n  \"largest_native_buffer\": [{}, {}],\n  \"gdi_handles_min\": {min_gdi},\n  \"gdi_handles_max\": {max_gdi},\n  \"frames\": {smoke_ticks}\n}}\n",initial.right,initial.bottom,full_size.0,full_size.1,restored_size.0,restored_size.1,max_buffer.0,max_buffer.1);
                                 let text = text.replacen("{", &format!("{{\n  \"fullscreen_covers_taskbar\": {fullscreen_covered},\n  \"windowed_z_order_restored\": {restored_z_order},\n  \"icon_loaded\": {icon_loaded},\n  \"feedback_sound_requests\": {sounds_requested},\n  \"audio_requests_accepted\": {sounds_accepted},"), 1);
+                                frame_times.sort_by(|a, b| a.total_cmp(b));
+                                let mean = frame_times.iter().sum::<f64>()
+                                    / frame_times.len().max(1) as f64;
+                                let p95 = frame_times
+                                    .get((frame_times.len() as f64 * 0.95) as usize)
+                                    .copied()
+                                    .unwrap_or(0.0);
+                                let maximum = frame_times.last().copied().unwrap_or(0.0);
+                                let text=text.replacen("{",&format!("{{\n  \"frame_mean_ms\": {mean:.3},\n  \"frame_p95_ms\": {p95:.3},\n  \"frame_max_ms\": {maximum:.3},"),1);
+                                let text=text.replacen("{",&format!("{{\n  \"cursor_hidden_during_play\": {cursor_hidden_verified},\n  \"cursor_visible_in_menus\": {cursor_visible_verified},\n  \"game_over_on_empty_tree\": {game_over_verified},\n  \"restart_after_game_over\": {restart_verified},"),1);
                                 std::fs::write(report, text).map_err(|e| e.to_string())?;
                                 if !passed {
                                     failure=Some("The automated Windows rendering check failed. See its report.".into());
@@ -514,6 +584,17 @@ fn run_window(smoke: Option<&str>) -> Result<(), String> {
                 DestroyWindow(hwnd);
                 continue;
             }
+            let hide_cursor = app.hide_pointer();
+            if host.hide_cursor != hide_cursor {
+                host.hide_cursor = hide_cursor;
+                if GetForegroundWindow() == hwnd && cursor_in_client(hwnd) {
+                    SetCursor(if hide_cursor {
+                        NULL
+                    } else {
+                        LoadCursorW(NULL, 32512usize as *const u16)
+                    });
+                }
+            }
             if host.redraw {
                 host.redraw = false;
                 let r = client_rect(hwnd);
@@ -533,6 +614,7 @@ fn run_window(smoke: Option<&str>) -> Result<(), String> {
                     }
                 }
             }
+            frame_pacer.wait();
         }
         if let Some(error) = failure {
             Err(error)
@@ -555,6 +637,11 @@ fn preview(
         SetProcessDpiAwarenessContext(-4isize as Handle);
     }
     let mut app = Application::new(language);
+    let (kind, over) = if let Some(kind) = kind.strip_prefix("over-") {
+        (kind, true)
+    } else {
+        (kind, false)
+    };
     let (kind, feedback_kind) = if let Some(kind) = kind.strip_prefix("correct-") {
         (kind, Some(game::FeedbackKind::Correct))
     } else if let Some(kind) = kind.strip_prefix("wrong-") {
@@ -627,8 +714,18 @@ fn preview(
         }
         _ => return Err("Unknown preview screen".into()),
     }
-    app.game.rules.growth = 5;
-    app.game.display_growth = 5.0;
+    app.game.rules.growth = if over { 0 } else { 5 };
+    app.game.rules.game_over = over;
+    if over {
+        app.game.drops.clear();
+        app.game.message = language
+            .text(
+                "Trädet krympte helt. Spelet är slut!",
+                "The tree has shrunk away. Game over!",
+            )
+            .into();
+    }
+    app.game.display_growth = if over { 0.0 } else { 5.0 };
     app.game.animation = 1.4;
     if let Some(kind) = feedback_kind {
         app.game.feedback = Some(game::Feedback {

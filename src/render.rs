@@ -461,44 +461,95 @@ fn menu(p: &mut Painter, language: Language) {
         21,
         0xc9ddd6,
     );
-    p.round_rect(220.0, 220.0, 560.0, 100.0, 22.0, 0x294b62);
+    p.round_rect(220.0, 220.0, 265.0, 220.0, 24.0, 0x294b62);
+    p.round_rect(515.0, 220.0, 265.0, 220.0, 24.0, 0x2c604c);
+    for (x, key) in [(235.0, "1"), (530.0, "2")] {
+        p.round_rect(x, 235.0, 32.0, 30.0, 10.0, 0x18363d);
+        p.center(x + 16.0, 250.0, 32.0, key, 17, 0xcbe9da);
+    }
+    // The arithmetic card is a miniature illustrated equation.
+    p.round_rect(248.0, 280.0, 209.0, 73.0, 17.0, 0x153444);
+    p.center(352.5, 317.0, 207.0, "4 + 3 = 7", 35, 0xa8efca);
     p.center(
-        500.0,
-        253.0,
-        520.0,
-        language.text("1   Matematik", "1   Math"),
-        30,
-        0xf1f6ff,
+        352.5,
+        389.0,
+        255.0,
+        language.text("Fånga rätt svar", "Catch matching answers"),
+        18,
+        0xe4f0ff,
     );
     p.center(
-        500.0,
-        292.0,
-        520.0,
-        language.text(
-            "Fånga rätt svar · addition och subtraktion",
-            "Catch matching answers · addition and subtraction",
+        352.5,
+        418.0,
+        255.0,
+        language.text("Addition och subtraktion", "Addition and subtraction"),
+        13,
+        0xb5cddd,
+    );
+    // A resolution-independent open book, matching the application's icon.
+    p.polygon(
+        &[
+            (579.0, 284.0),
+            (647.5, 298.0),
+            (716.0, 284.0),
+            (716.0, 354.0),
+            (647.5, 369.0),
+            (579.0, 354.0),
+        ],
+        0x69bab0,
+    );
+    p.polygon(
+        &[
+            (585.0, 276.0),
+            (647.5, 290.0),
+            (647.5, 359.0),
+            (585.0, 345.0),
+        ],
+        0xfff8df,
+    );
+    p.polygon(
+        &[
+            (647.5, 290.0),
+            (710.0, 276.0),
+            (710.0, 345.0),
+            (647.5, 359.0),
+        ],
+        0xf3e8c4,
+    );
+    p.line(647.5, 291.0, 647.5, 357.0, 2.0, 0xccbe95);
+    for row in 0..3 {
+        let y = 299.0 + row as f32 * 13.0;
+        p.line(597.0, y, 635.0, y + 8.0, 2.0, 0xb3be9e);
+        p.line(659.0, y + 8.0, 697.0, y, 2.0, 0xb3be9e);
+    }
+    p.polygon(
+        &[
+            (685.0, 281.5),
+            (697.0, 279.0),
+            (697.0, 309.0),
+            (691.0, 303.0),
+            (685.0, 311.0),
+        ],
+        0xf1a377,
+    );
+    p.center(
+        647.5,
+        389.0,
+        255.0,
+        language.text("Fånga rätt ord", "Catch matching words"),
+        18,
+        0xe4fff0,
+    );
+    p.center(
+        647.5,
+        418.0,
+        255.0,
+        &format!(
+            "{} {}",
+            WORDS.len(),
+            language.text("bilder att upptäcka", "pictures to discover")
         ),
-        17,
-        0xc9dcf0,
-    );
-    p.round_rect(220.0, 345.0, 560.0, 100.0, 22.0, 0x2c604c);
-    p.center(
-        500.0,
-        378.0,
-        520.0,
-        language.text("2   Läsning", "2   Reading"),
-        30,
-        0xf1fff5,
-    );
-    p.center(
-        500.0,
-        417.0,
-        520.0,
-        language.text(
-            "Bilder och ord · 120 saker att upptäcka",
-            "Pictures and words · 120 objects to discover",
-        ),
-        17,
+        13,
         0xc7edda,
     );
     p.round_rect(300.0, 480.0, 400.0, 62.0, 17.0, 0x253f43);
@@ -520,7 +571,18 @@ fn menu(p: &mut Painter, language: Language) {
     );
     p.center(
         500.0,
-        669.0,
+        639.0,
+        940.0,
+        language.text(
+            "Av Josef Holmner, med särskilt tack till David Nilsson",
+            "By Josef Holmner, with special thanks to David Nilsson",
+        ),
+        15,
+        0xb7d5c6,
+    );
+    p.center(
+        500.0,
+        680.0,
         900.0,
         language.text(
             "Klicka på ett spel eller tryck 1 / 2.   F11: helskärm",
@@ -748,6 +810,11 @@ fn scene(p: &mut Painter, game: &Game, picture: Option<Gp>) {
             p.ellipse(x as f32, y as f32, 2.0, 2.0, 0x32434d);
         }
     }
+    // Unhinted antialiasing keeps moving letter baselines at fractional pixel
+    // positions instead of snapping glyphs against a stationary pixel grid.
+    unsafe {
+        GdipSetTextRenderingHint(p.g, 4);
+    }
     for drop in &game.drops {
         let width = drop.half_width * 2.0;
         p.round_rect(
@@ -774,6 +841,9 @@ fn scene(p: &mut Painter, game: &Game, picture: Option<Gp>) {
             27,
             0xf3f7ff,
         );
+    }
+    unsafe {
+        GdipSetTextRenderingHint(p.g, 3);
     }
     let effect = game.feedback.as_ref();
     let shake = effect
@@ -831,15 +901,66 @@ fn scene(p: &mut Painter, game: &Game, picture: Option<Gp>) {
         681.0,
         715.0,
         language.text(
-            "Pilar / A D / mus: flytta   Mellanslag: paus   R: omstart   Esc: meny",
-            "Arrows / A D / Mouse: move   Space: pause   R: restart   Esc: menu",
+            "Pilar / A D / mus: flytta   Mellanslag: paus   R: omstart   Esc: meny   F11: helskärm",
+            "Arrows / A D / Mouse: move   Space: pause   R: restart   Esc: menu   F11: full screen",
         ),
         12,
         0xc3d0e2,
     );
     catch_feedback(p, game);
     tree(p, game);
-    if game.paused {
+    if game.rules.game_over {
+        p.round_rect(104.0, 278.0, 512.0, 234.0, 22.0, 0x0e1c29);
+        p.round_rect(110.0, 284.0, 500.0, 222.0, 18.0, 0x23384b);
+        p.center(
+            360.0,
+            325.0,
+            470.0,
+            language.text("SPELET ÄR SLUT", "GAME OVER"),
+            34,
+            0xffb3b3,
+        );
+        p.center(
+            360.0,
+            374.0,
+            470.0,
+            &format!(
+                "{} {}   •   {} {}",
+                language.text("Nivå", "Level"),
+                state.level,
+                language.text("Poäng", "Score"),
+                state.score
+            ),
+            19,
+            0xeaf1ff,
+        );
+        p.center(
+            360.0,
+            410.0,
+            470.0,
+            language.text("Vill du försöka igen?", "Would you like to try again?"),
+            17,
+            0xc3d0e2,
+        );
+        p.round_rect(175.0, 440.0, 175.0, 50.0, 13.0, 0x39775d);
+        p.round_rect(370.0, 440.0, 175.0, 50.0, 13.0, 0x34546d);
+        p.center(
+            262.5,
+            465.0,
+            170.0,
+            language.text("Igen  [R]", "Again  [R]"),
+            19,
+            0xedfff1,
+        );
+        p.center(
+            457.5,
+            465.0,
+            170.0,
+            language.text("Meny  [Esc]", "Menu  [Esc]"),
+            19,
+            0xeaf1ff,
+        );
+    } else if game.paused {
         p.round_rect(104.0, 285.0, 512.0, 196.0, 22.0, 0x0e1c29);
         p.round_rect(110.0, 291.0, 500.0, 184.0, 18.0, 0x23384b);
         p.center(

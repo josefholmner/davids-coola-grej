@@ -338,3 +338,56 @@ extern "system" {
     pub fn LoadIconW(instance: Handle, name: *const u16) -> Handle;
     pub fn WindowFromPoint(point: Point) -> Hwnd;
 }
+
+#[link(name = "user32")]
+extern "system" {
+    pub fn PeekMessageW(message: *mut Msg, hwnd: Hwnd, min: u32, max: u32, remove: u32) -> i32;
+}
+#[link(name = "gdi32")]
+extern "system" {
+    pub fn GdiFlush() -> i32;
+    pub fn GetDeviceCaps(dc: Hdc, index: i32) -> i32;
+}
+#[link(name = "dwmapi")]
+extern "system" {
+    pub fn DwmFlush() -> i32;
+}
+#[link(name = "kernel32")]
+extern "system" {
+    pub fn CreateWaitableTimerExW(
+        attributes: Handle,
+        name: *const u16,
+        flags: u32,
+        access: u32,
+    ) -> Handle;
+    pub fn SetWaitableTimer(
+        timer: Handle,
+        due: *const i64,
+        period: i32,
+        callback: Handle,
+        argument: Handle,
+        resume: i32,
+    ) -> i32;
+    pub fn WaitForSingleObject(handle: Handle, milliseconds: u32) -> u32;
+    pub fn CloseHandle(handle: Handle) -> i32;
+}
+
+#[link(name = "user32")]
+extern "system" {
+    pub fn SetCursor(cursor: Handle) -> Handle;
+    pub fn GetForegroundWindow() -> Hwnd;
+}
+
+#[repr(C)]
+pub struct CursorInfo {
+    pub size: u32,
+    pub flags: u32,
+    pub cursor: Handle,
+    pub position: Point,
+}
+#[link(name = "user32")]
+extern "system" {
+    pub fn GetCursorInfo(info: *mut CursorInfo) -> i32;
+    pub fn GetCursorPos(point: *mut Point) -> i32;
+    pub fn ScreenToClient(hwnd: Hwnd, point: *mut Point) -> i32;
+}

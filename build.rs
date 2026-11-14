@@ -45,6 +45,24 @@ fn main() {
         let path = root.join("assets/reading").join(name);
         println!("cargo:rerun-if-changed={}", path.display());
         if path.exists() {
+            use std::io::Read;
+            let mut header = [0u8; 24];
+            std::fs::File::open(&path)
+                .and_then(|mut file| file.read_exact(&mut header))
+                .expect("Reading illustration header");
+            assert_eq!(
+                &header[..8],
+                b"\x89PNG\r\n\x1a\n",
+                "Illustration is not a PNG: {}. Fetch Git LFS assets before building.",
+                path.display()
+            );
+            let width = u32::from_be_bytes(header[16..20].try_into().unwrap());
+            let height = u32::from_be_bytes(header[20..24].try_into().unwrap());
+            assert!(
+                width >= 512 && height >= 512,
+                "Illustration resolution is too low: {}",
+                path.display()
+            );
             code.push_str(&format!("include_bytes!({:?}) as &[u8],\n", path));
         } else {
             missing.push(name.to_string());
