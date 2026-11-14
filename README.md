@@ -33,7 +33,7 @@ Spelet innehåller **220 olika illustrerade saker**, med både svenska och engel
 | 7–8 | 6 bokstäver |
 | 9 och högre | 7 bokstäver |
 
-Första ordet är ibland rätt, men högst två omgångar i rad börjar med rätt ord. Rätta och felaktiga ord blandas i små, balanserade grupper, och felorden varierar också.
+För varje ny bild är det första ordet rätt en gång av fem, och rätt ord finns alltid bland de fem första orden. Därefter kommer 1–3 felord mellan rätta ord. Samma bild får aldrig två rätta ord i följd, och ett nytt försök på samma bild återställer inte mellanrummen. Felorden varierar också.
 
 De andra orden som faller har samma längd som målbildens ord. Bilderna har inga ord eller etiketter som avslöjar svaret.
 

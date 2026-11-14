@@ -214,6 +214,51 @@ impl MatchBag {
     }
 }
 
+// Reading uses a sparser renewal schedule instead of the math 50/50 mix.
+// Opening positions are controlled separately so catching early never biases
+// subsequent pictures toward presenting their answer first.
+#[derive(Default)]
+struct ReadingOrder {
+    openings: Vec<bool>,
+    last_opening: bool,
+    gaps: Vec<usize>,
+    distractors_left: usize,
+}
+impl ReadingOrder {
+    fn new_picture(&mut self, rng: &mut Rng) {
+        if self.openings.is_empty() {
+            self.openings = vec![true, false, false, false, false];
+            rng.shuffle(&mut self.openings);
+            let end = self.openings.len() - 1;
+            if self.last_opening && self.openings[end] {
+                let other = self.openings.iter().position(|value| !value).unwrap();
+                self.openings.swap(other, end);
+            }
+        }
+        let correct_first = self.openings.pop().unwrap();
+        self.last_opening = correct_first;
+        // After an incorrect opener, vary the first opportunity across words
+        // 2 through 5 while keeping the opening wait bounded.
+        self.distractors_left = if correct_first {
+            0
+        } else {
+            rng.integer(1, 4) as usize
+        };
+    }
+    fn next(&mut self, rng: &mut Rng) -> bool {
+        if self.distractors_left > 0 {
+            self.distractors_left -= 1;
+            return false;
+        }
+        if self.gaps.is_empty() {
+            self.gaps = vec![1, 2, 2, 3];
+            rng.shuffle(&mut self.gaps);
+        }
+        self.distractors_left = self.gaps.pop().unwrap();
+        true
+    }
+}
+
 #[derive(Clone, Copy)]
 pub enum Content {
     Math(Problem),
@@ -366,6 +411,7 @@ pub struct Game {
     pub feedback: Option<Feedback>,
     pub pending_sound: Option<FeedbackKind>,
     opening_order: MatchBag,
+    reading_order: ReadingOrder,
     match_order: MatchBag,
     round_key: Option<(Mode, Language, u32, i32)>,
     round_spawns: usize,
@@ -414,6 +460,7 @@ impl Game {
             feedback: None,
             pending_sound: None,
             opening_order: MatchBag::default(),
+            reading_order: ReadingOrder::default(),
             match_order: MatchBag::default(),
             round_key: None,
             round_spawns: 0,
@@ -499,12 +546,17 @@ impl Game {
         if self.round_key != Some(key) {
             self.round_key = Some(key);
             self.round_spawns = 0;
+            if self.rules.mode == Mode::Reading {
+                self.reading_order.new_picture(&mut self.rng);
+            }
             self.math_choices.clear();
             self.last_math_choice = None;
             self.word_choices.clear();
             self.last_wrong_word = None;
         }
-        let matching = if self.round_spawns == 0 {
+        let matching = if self.rules.mode == Mode::Reading {
+            self.reading_order.next(&mut self.rng)
+        } else if self.round_spawns == 0 {
             let first = self.opening_order.next(&mut self.rng);
             self.match_order = MatchBag::after_first(first, &mut self.rng);
             first
@@ -537,7 +589,7 @@ impl Game {
         } + self.rng.fraction() * 10.0;
         self.drops.push(Drop {
             x,
-            y: if reading { 305.0 } else { 205.0 },
+            y: if reading { 265.0 } else { 205.0 },
             half_width,
             speed,
             content,
@@ -847,7 +899,7 @@ mod tests {
                 panic!("Math problem in reading mode");
             }
         }
-        assert!((180..320).contains(&matches));
+        assert!((150..185).contains(&matches));
         let wrong = vocabulary::pool(1, Language::Swedish)
             .into_iter()
             .find(|id| *id != target)
@@ -903,58 +955,102 @@ mod tests {
             assert!(game.feedback.is_none());
         }
     }
+    fn spawned_word_matches(game: &mut Game) -> bool {
+        game.spawn();
+        let Content::Word(id) = game.drops.pop().unwrap().content else {
+            panic!("Math in reading mode");
+        };
+        id == game.rules.target_word
+    }
     #[test]
-    fn opening_answers_are_balanced_without_long_streaks() {
+    fn reading_correct_word_is_first_in_only_one_fifth_of_pictures() {
         for language in [Language::Swedish, Language::English] {
-            let mut game = Game::for_mode(Mode::Reading, language);
-            game.rng = Rng::seeded(83);
-            let mut streak = 0;
-            let mut previous = None;
-            let mut matches = 0;
-            for round in 0..400 {
-                // Includes retries on the same target, not just new pictures.
-                game.round_spawns = 0;
-                game.spawn();
-                let correct = matches!(game.drops.last().unwrap().content,Content::Word(id) if id==game.rules.target_word);
-                streak = if previous == Some(correct) {
-                    streak + 1
-                } else {
-                    1
-                };
-                previous = Some(correct);
-                assert!(streak <= 2);
-                matches += correct as usize;
-                if round % 4 == 3 {
-                    assert_eq!(matches, (round + 1) / 2);
-                }
-                if round % 3 == 0 {
+            for seed in [1, 7, 42, 83, 123456] {
+                let mut game = Game::for_mode(Mode::Reading, language);
+                game.rng = Rng::seeded(seed);
+                let mut correct_first = 0;
+                let mut first_positions = [0; 5];
+                let mut previous_first = false;
+                for _ in 0..500 {
                     game.rules.new_target(&mut game.rng);
+                    let first = spawned_word_matches(&mut game);
+                    correct_first += first as usize;
+                    assert!(
+                        !(first && previous_first),
+                        "Correct-first pictures must not repeat consecutively"
+                    );
+                    previous_first = first;
+                    let position = if first {
+                        0
+                    } else {
+                        (1..5)
+                            .find(|_| spawned_word_matches(&mut game))
+                            .expect("Every new picture must offer its answer by word five")
+                    };
+                    first_positions[position] += 1;
                 }
-                game.drops.clear();
+                assert_eq!(
+                    correct_first, 100,
+                    "Expected a 20% opening frequency, not the old 50%"
+                );
+                assert!(
+                    first_positions.iter().all(|count| *count > 0),
+                    "Opening answers should use all five positions: {first_positions:?}"
+                );
             }
         }
     }
     #[test]
-    fn each_round_has_even_mix_with_no_long_runs() {
-        let mut game = Game::for_mode(Mode::Reading, Language::Swedish);
-        game.rng = Rng::seeded(42);
-        for _ in 0..30 {
-            game.rules.new_target(&mut game.rng);
-            let mut correct_count = 0;
-            let mut streak = 0;
-            let mut last = None;
-            for index in 0..40 {
-                game.spawn();
-                let correct = matches!(game.drops.last().unwrap().content,Content::Word(id) if id==game.rules.target_word);
-                correct_count += correct as usize;
-                streak = if last == Some(correct) { streak + 1 } else { 1 };
-                last = Some(correct);
-                assert!(streak <= 2);
-                if index % 4 == 3 {
-                    assert_eq!(correct_count, (index + 1) / 2);
+    fn reading_matches_are_sparse_without_back_to_back_answers_or_droughts() {
+        for language in [Language::Swedish, Language::English] {
+            for level in [1, 3, 5, 7, 9] {
+                for seed in [7, 42, 83] {
+                    let mut game = Game::for_mode(Mode::Reading, language);
+                    game.rng = Rng::seeded(seed);
+                    game.rules.level = level;
+                    game.rules.new_target(&mut game.rng);
+                    let mut previous = false;
+                    let mut wrong_run = 0;
+                    let mut matches = 0;
+                    for _ in 0..1200 {
+                        let correct = spawned_word_matches(&mut game);
+                        assert!(
+                            !(correct && previous),
+                            "Consecutive correct words for one picture"
+                        );
+                        wrong_run = if correct { 0 } else { wrong_run + 1 };
+                        assert!(
+                            wrong_run <= if matches == 0 { 4 } else { 3 },
+                            "Wait between answers is too long"
+                        );
+                        previous = correct;
+                        matches += correct as usize;
+                    }
+                    let rate = matches as f32 / 1200.0;
+                    assert!(
+                        (0.30..=0.36).contains(&rate),
+                        "Correct words must stay near one third: {rate}"
+                    );
                 }
             }
-            game.drops.clear();
+        }
+    }
+    #[test]
+    fn retrying_same_picture_does_not_reset_reading_spacing() {
+        let mut game = Game::for_mode(Mode::Reading, Language::Swedish);
+        game.rng = Rng::seeded(17);
+        let mut previous = false;
+        let mut wrong_run = 0;
+        let mut seen_match = false;
+        for _ in 0..300 {
+            // A wrong catch starts a fresh attempt but keeps the same picture.
+            game.round_spawns = 0;
+            let correct = spawned_word_matches(&mut game);
+            assert!(!(correct && previous));
+            wrong_run = if correct { 0 } else { wrong_run + 1 };
+            assert!(wrong_run <= if seen_match { 3 } else { 4 });
+            seen_match |= correct;
+            previous = correct;
         }
     }
     #[test]

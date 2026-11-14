@@ -686,7 +686,7 @@ fn scene(p: &mut Painter, game: &Game, picture: Option<Gp>) {
     let d = state.difficulty();
     let language = state.language;
     let reading = state.mode == Mode::Reading;
-    let header = if reading { 250.0 } else { 150.0 };
+    let header = if reading { 210.0 } else { 150.0 };
     p.rect(0.0, 0.0, WIDTH, HEIGHT, level_color(state.level));
     p.rect(
         PLAY_RIGHT,
@@ -728,16 +728,16 @@ fn scene(p: &mut Painter, game: &Game, picture: Option<Gp>) {
         0xc6d9e5,
     );
     if reading {
-        p.round_rect(272.0, 10.0, 176.0, 178.0, 20.0, 0xfff8ed);
+        p.round_rect(288.0, 10.0, 144.0, 146.0, 18.0, 0xfff8ed);
         if let Some(image) = picture {
             unsafe {
-                GdipDrawImageRect(p.g, image, 280.0, 17.0, 160.0, 160.0);
+                GdipDrawImageRect(p.g, image, 296.0, 17.0, 128.0, 128.0);
             }
         } else {
             p.center(
                 360.0,
-                95.0,
-                160.0,
+                81.0,
+                128.0,
                 language.text("Bild", "Picture"),
                 22,
                 0x38554d,
@@ -745,7 +745,7 @@ fn scene(p: &mut Painter, game: &Game, picture: Option<Gp>) {
         }
         p.center(
             360.0,
-            216.0,
+            184.0,
             680.0,
             language.text(
                 "Vilket ord hör till bilden?",
