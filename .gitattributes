@@ -1,0 +1,110 @@
+# Normalize text files; keep source code and text assets in regular Git.
+* text=auto
+
+# Git attributes cannot detect binary content for LFS automatically.
+# Match binary extensions (case-insensitively); add new formats here as needed.
+
+# Images
+*.[pP][nN][gG] filter=lfs diff=lfs merge=lfs -text
+*.[jJ][pP][gG] filter=lfs diff=lfs merge=lfs -text
+*.[jJ][pP][eE][gG] filter=lfs diff=lfs merge=lfs -text
+*.[jJ][pP][eE] filter=lfs diff=lfs merge=lfs -text
+*.[gG][iI][fF] filter=lfs diff=lfs merge=lfs -text
+*.[bB][mM][pP] filter=lfs diff=lfs merge=lfs -text
+*.[iI][cC][oO] filter=lfs diff=lfs merge=lfs -text
+*.[iI][cC][nN][sS] filter=lfs diff=lfs merge=lfs -text
+*.[tT][iI][fF] filter=lfs diff=lfs merge=lfs -text
+*.[tT][iI][fF][fF] filter=lfs diff=lfs merge=lfs -text
+*.[wW][eE][bB][pP] filter=lfs diff=lfs merge=lfs -text
+*.[aA][vV][iI][fF] filter=lfs diff=lfs merge=lfs -text
+*.[hH][eE][iI][cC] filter=lfs diff=lfs merge=lfs -text
+*.[pP][sS][dD] filter=lfs diff=lfs merge=lfs -text
+*.[aA][iI] filter=lfs diff=lfs merge=lfs -text
+*.[eE][pP][sS] filter=lfs diff=lfs merge=lfs -text
+
+# Audio and video
+*.[wW][aA][vV] filter=lfs diff=lfs merge=lfs -text
+*.[mM][pP]3 filter=lfs diff=lfs merge=lfs -text
+*.[oO][gG][gG] filter=lfs diff=lfs merge=lfs -text
+*.[oO][gG][aA] filter=lfs diff=lfs merge=lfs -text
+*.[oO][pP][uU][sS] filter=lfs diff=lfs merge=lfs -text
+*.[fF][lL][aA][cC] filter=lfs diff=lfs merge=lfs -text
+*.[aA][aA][cC] filter=lfs diff=lfs merge=lfs -text
+*.[mM]4[aA] filter=lfs diff=lfs merge=lfs -text
+*.[wW][mM][aA] filter=lfs diff=lfs merge=lfs -text
+*.[mM][pP]4 filter=lfs diff=lfs merge=lfs -text
+*.[mM]4[vV] filter=lfs diff=lfs merge=lfs -text
+*.[mM][oO][vV] filter=lfs diff=lfs merge=lfs -text
+*.[aA][vV][iI] filter=lfs diff=lfs merge=lfs -text
+*.[mM][kK][vV] filter=lfs diff=lfs merge=lfs -text
+*.[wW][eE][bB][mM] filter=lfs diff=lfs merge=lfs -text
+*.[wW][mM][vV] filter=lfs diff=lfs merge=lfs -text
+*.[mM][pP][gG] filter=lfs diff=lfs merge=lfs -text
+*.[mM][pP][eE][gG] filter=lfs diff=lfs merge=lfs -text
+
+# Archives and packages
+*.[zZ][iI][pP] filter=lfs diff=lfs merge=lfs -text
+*.7[zZ] filter=lfs diff=lfs merge=lfs -text
+*.[rR][aA][rR] filter=lfs diff=lfs merge=lfs -text
+*.[tT][aA][rR] filter=lfs diff=lfs merge=lfs -text
+*.[gG][zZ] filter=lfs diff=lfs merge=lfs -text
+*.[bB][zZ]2 filter=lfs diff=lfs merge=lfs -text
+*.[xX][zZ] filter=lfs diff=lfs merge=lfs -text
+*.[zZ][sS][tT] filter=lfs diff=lfs merge=lfs -text
+*.[tT][gG][zZ] filter=lfs diff=lfs merge=lfs -text
+*.[cC][aA][bB] filter=lfs diff=lfs merge=lfs -text
+*.[iI][sS][oO] filter=lfs diff=lfs merge=lfs -text
+*.[dD][mM][gG] filter=lfs diff=lfs merge=lfs -text
+*.[mM][sS][iI] filter=lfs diff=lfs merge=lfs -text
+*.[mM][sS][iI][xX] filter=lfs diff=lfs merge=lfs -text
+*.[nN][uU][pP][kK][gG] filter=lfs diff=lfs merge=lfs -text
+*.[wW][hH][lL] filter=lfs diff=lfs merge=lfs -text
+
+# Executables and compiled output
+*.[eE][xX][eE] filter=lfs diff=lfs merge=lfs -text
+*.[dD][lL][lL] filter=lfs diff=lfs merge=lfs -text
+*.[pP][dD][bB] filter=lfs diff=lfs merge=lfs -text
+*.[oO][bB][jJ] filter=lfs diff=lfs merge=lfs -text
+*.[oO] filter=lfs diff=lfs merge=lfs -text
+*.[lL][iI][bB] filter=lfs diff=lfs merge=lfs -text
+*.[aA] filter=lfs diff=lfs merge=lfs -text
+*.[sS][oO] filter=lfs diff=lfs merge=lfs -text
+*.[dD][yY][lL][iI][bB] filter=lfs diff=lfs merge=lfs -text
+*.[rR][lL][iI][bB] filter=lfs diff=lfs merge=lfs -text
+*.[rR][mM][eE][tT][aA] filter=lfs diff=lfs merge=lfs -text
+*.[cC][lL][aA][sS][sS] filter=lfs diff=lfs merge=lfs -text
+*.[jJ][aA][rR] filter=lfs diff=lfs merge=lfs -text
+*.[pP][yY][cC] filter=lfs diff=lfs merge=lfs -text
+*.[pP][yY][dD] filter=lfs diff=lfs merge=lfs -text
+*.[wW][aA][sS][mM] filter=lfs diff=lfs merge=lfs -text
+*.[bB][iI][nN] filter=lfs diff=lfs merge=lfs -text
+
+# Fonts
+*.[tT][tT][fF] filter=lfs diff=lfs merge=lfs -text
+*.[oO][tT][fF] filter=lfs diff=lfs merge=lfs -text
+*.[wW][oO][fF][fF] filter=lfs diff=lfs merge=lfs -text
+*.[wW][oO][fF][fF]2 filter=lfs diff=lfs merge=lfs -text
+*.[eE][oO][tT] filter=lfs diff=lfs merge=lfs -text
+
+# Documents
+*.[pP][dD][fF] filter=lfs diff=lfs merge=lfs -text
+*.[dD][oO][cC] filter=lfs diff=lfs merge=lfs -text
+*.[dD][oO][cC][xX] filter=lfs diff=lfs merge=lfs -text
+*.[xX][lL][sS] filter=lfs diff=lfs merge=lfs -text
+*.[xX][lL][sS][xX] filter=lfs diff=lfs merge=lfs -text
+*.[pP][pP][tT] filter=lfs diff=lfs merge=lfs -text
+*.[pP][pP][tT][xX] filter=lfs diff=lfs merge=lfs -text
+*.[oO][dD][tT] filter=lfs diff=lfs merge=lfs -text
+*.[oO][dD][sS] filter=lfs diff=lfs merge=lfs -text
+*.[oO][dD][pP] filter=lfs diff=lfs merge=lfs -text
+
+# Databases and models
+*.[dD][bB] filter=lfs diff=lfs merge=lfs -text
+*.[sS][qQ][lL][iI][tT][eE] filter=lfs diff=lfs merge=lfs -text
+*.[sS][qQ][lL][iI][tT][eE]3 filter=lfs diff=lfs merge=lfs -text
+*.[oO][nN][nN][xX] filter=lfs diff=lfs merge=lfs -text
+*.[sS][aA][fF][eE][tT][eE][nN][sS][oO][rR][sS] filter=lfs diff=lfs merge=lfs -text
+*.[bB][lL][eE][nN][dD] filter=lfs diff=lfs merge=lfs -text
+*.[fF][bB][xX] filter=lfs diff=lfs merge=lfs -text
+*.[gG][lL][bB] filter=lfs diff=lfs merge=lfs -text
+*.[sS][tT][lL] filter=lfs diff=lfs merge=lfs -text

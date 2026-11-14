@@ -1,0 +1,842 @@
+[
+  {
+    "id": 0,
+    "swedish": "sten",
+    "english": "rock",
+    "subject": "a smooth gray rock with a few natural facets",
+    "image": "rock.png"
+  },
+  {
+    "id": 1,
+    "swedish": "sol",
+    "english": "sun",
+    "subject": "a golden round sun with clear triangular rays",
+    "image": "sun.png"
+  },
+  {
+    "id": 2,
+    "swedish": "måne",
+    "english": "moon",
+    "subject": "a silver crescent moon",
+    "image": "moon.png"
+  },
+  {
+    "id": 3,
+    "swedish": "moln",
+    "english": "cloud",
+    "subject": "a single fluffy white cloud outlined in blue",
+    "image": "cloud.png"
+  },
+  {
+    "id": 4,
+    "swedish": "stjärna",
+    "english": "star",
+    "subject": "a golden five-pointed star",
+    "image": "star.png"
+  },
+  {
+    "id": 5,
+    "swedish": "träd",
+    "english": "tree",
+    "subject": "a leafy green tree with a brown trunk",
+    "image": "tree.png"
+  },
+  {
+    "id": 6,
+    "swedish": "blad",
+    "english": "leaf",
+    "subject": "a single green leaf with visible veins",
+    "image": "leaf.png"
+  },
+  {
+    "id": 7,
+    "swedish": "blomma",
+    "english": "flower",
+    "subject": "a bright simple daisy flower on a stem with two leaves",
+    "image": "flower.png"
+  },
+  {
+    "id": 8,
+    "swedish": "ros",
+    "english": "rose",
+    "subject": "a single red rose on a short green stem",
+    "image": "rose.png"
+  },
+  {
+    "id": 9,
+    "swedish": "buske",
+    "english": "bush",
+    "subject": "a short rounded leafy green bush",
+    "image": "bush.png"
+  },
+  {
+    "id": 10,
+    "swedish": "kulle",
+    "english": "hill",
+    "subject": "a small rounded grassy green hill",
+    "image": "hill.png"
+  },
+  {
+    "id": 11,
+    "swedish": "snö",
+    "english": "snow",
+    "subject": "a little mound of soft white snow with two snowflakes floating above",
+    "image": "snow.png"
+  },
+  {
+    "id": 12,
+    "swedish": "eld",
+    "english": "fire",
+    "subject": "a small orange and yellow flame",
+    "image": "fire.png"
+  },
+  {
+    "id": 13,
+    "swedish": "ekollon",
+    "english": "acorn",
+    "subject": "one brown acorn with a textured cap",
+    "image": "acorn.png"
+  },
+  {
+    "id": 14,
+    "swedish": "snäcka",
+    "english": "shell",
+    "subject": "one pink scallop seashell",
+    "image": "shell.png"
+  },
+  {
+    "id": 15,
+    "swedish": "katt",
+    "english": "cat",
+    "subject": "a sitting orange cat with whiskers and a curled tail",
+    "image": "cat.png"
+  },
+  {
+    "id": 16,
+    "swedish": "hund",
+    "english": "dog",
+    "subject": "a friendly sitting brown dog with floppy ears",
+    "image": "dog.png"
+  },
+  {
+    "id": 17,
+    "swedish": "tjur",
+    "english": "bull",
+    "subject": "a sturdy black and white bull with small horns and a nose ring",
+    "image": "bull.png"
+  },
+  {
+    "id": 18,
+    "swedish": "får",
+    "english": "sheep",
+    "subject": "a woolly white sheep",
+    "image": "sheep.png"
+  },
+  {
+    "id": 19,
+    "swedish": "gris",
+    "english": "pig",
+    "subject": "a pink pig with a curly tail",
+    "image": "pig.png"
+  },
+  {
+    "id": 20,
+    "swedish": "häst",
+    "english": "horse",
+    "subject": "a standing brown horse with mane and tail",
+    "image": "horse.png"
+  },
+  {
+    "id": 21,
+    "swedish": "mus",
+    "english": "mouse",
+    "subject": "a little gray mouse with round ears and a long thin tail",
+    "image": "mouse.png"
+  },
+  {
+    "id": 22,
+    "swedish": "råtta",
+    "english": "rat",
+    "subject": "a gray rat with a long pointed snout, small ears and a long pink tail",
+    "image": "rat.png"
+  },
+  {
+    "id": 23,
+    "swedish": "hare",
+    "english": "hare",
+    "subject": "a brown hare with very long upright ears and long back feet",
+    "image": "hare.png"
+  },
+  {
+    "id": 24,
+    "swedish": "kanin",
+    "english": "rabbit",
+    "subject": "a round white rabbit with short fluffy tail and upright ears",
+    "image": "rabbit.png"
+  },
+  {
+    "id": 25,
+    "swedish": "räv",
+    "english": "fox",
+    "subject": "an orange fox with pointed ears and a bushy white-tipped tail",
+    "image": "fox.png"
+  },
+  {
+    "id": 26,
+    "swedish": "varg",
+    "english": "wolf",
+    "subject": "a gray wolf standing with a bushy tail",
+    "image": "wolf.png"
+  },
+  {
+    "id": 27,
+    "swedish": "björn",
+    "english": "bear",
+    "subject": "a brown bear standing on four paws",
+    "image": "bear.png"
+  },
+  {
+    "id": 28,
+    "swedish": "lejon",
+    "english": "lion",
+    "subject": "a golden male lion with a large round mane",
+    "image": "lion.png"
+  },
+  {
+    "id": 29,
+    "swedish": "tiger",
+    "english": "tiger",
+    "subject": "an orange tiger with clear black stripes",
+    "image": "tiger.png"
+  },
+  {
+    "id": 30,
+    "swedish": "zebra",
+    "english": "zebra",
+    "subject": "a black and white striped zebra",
+    "image": "zebra.png"
+  },
+  {
+    "id": 31,
+    "swedish": "giraff",
+    "english": "giraffe",
+    "subject": "a yellow giraffe with a very long neck and brown patches",
+    "image": "giraffe.png"
+  },
+  {
+    "id": 32,
+    "swedish": "apa",
+    "english": "ape",
+    "subject": "a friendly brown ape with long arms and no tail",
+    "image": "ape.png"
+  },
+  {
+    "id": 33,
+    "swedish": "panda",
+    "english": "panda",
+    "subject": "a seated black and white panda bear",
+    "image": "panda.png"
+  },
+  {
+    "id": 34,
+    "swedish": "koala",
+    "english": "koala",
+    "subject": "a gray koala with fluffy round ears and a large black nose",
+    "image": "koala.png"
+  },
+  {
+    "id": 35,
+    "swedish": "älg",
+    "english": "moose",
+    "subject": "a brown moose with broad flat antlers",
+    "image": "moose.png"
+  },
+  {
+    "id": 36,
+    "swedish": "hjort",
+    "english": "deer",
+    "subject": "a slender brown deer with branching antlers",
+    "image": "deer.png"
+  },
+  {
+    "id": 37,
+    "swedish": "groda",
+    "english": "frog",
+    "subject": "a bright green frog",
+    "image": "frog.png"
+  },
+  {
+    "id": 38,
+    "swedish": "orm",
+    "english": "snake",
+    "subject": "a coiled green snake with its small forked tongue visible",
+    "image": "snake.png"
+  },
+  {
+    "id": 39,
+    "swedish": "ödla",
+    "english": "lizard",
+    "subject": "a small green lizard with four legs and a long tail",
+    "image": "lizard.png"
+  },
+  {
+    "id": 40,
+    "swedish": "snigel",
+    "english": "snail",
+    "subject": "a snail with a large spiral shell and two eyestalks",
+    "image": "snail.png"
+  },
+  {
+    "id": 41,
+    "swedish": "spindel",
+    "english": "spider",
+    "subject": "a friendly little spider with exactly eight legs",
+    "image": "spider.png"
+  },
+  {
+    "id": 42,
+    "swedish": "myra",
+    "english": "ant",
+    "subject": "a single ant with three body segments and six legs",
+    "image": "ant.png"
+  },
+  {
+    "id": 43,
+    "swedish": "fluga",
+    "english": "fly",
+    "subject": "a small fly insect with two clear wings and large eyes",
+    "image": "fly.png"
+  },
+  {
+    "id": 44,
+    "swedish": "geting",
+    "english": "wasp",
+    "subject": "a yellow and black striped wasp with a narrow waist and clear wings",
+    "image": "wasp.png"
+  },
+  {
+    "id": 45,
+    "swedish": "anka",
+    "english": "duck",
+    "subject": "a yellow duck with an orange bill and webbed feet",
+    "image": "duck.png"
+  },
+  {
+    "id": 46,
+    "swedish": "gås",
+    "english": "goose",
+    "subject": "a white goose with a long neck and orange beak",
+    "image": "goose.png"
+  },
+  {
+    "id": 47,
+    "swedish": "höna",
+    "english": "hen",
+    "subject": "a brown hen with a small red comb",
+    "image": "hen.png"
+  },
+  {
+    "id": 48,
+    "swedish": "tupp",
+    "english": "rooster",
+    "subject": "a colorful rooster with a large red comb and long curled tail feathers",
+    "image": "rooster.png"
+  },
+  {
+    "id": 49,
+    "swedish": "uggla",
+    "english": "owl",
+    "subject": "a brown owl with large round eyes perched upright",
+    "image": "owl.png"
+  },
+  {
+    "id": 50,
+    "swedish": "örn",
+    "english": "eagle",
+    "subject": "a brown eagle with a white head, hooked yellow beak and spread wings",
+    "image": "eagle.png"
+  },
+  {
+    "id": 51,
+    "swedish": "svan",
+    "english": "swan",
+    "subject": "a white swan with an elegantly curved long neck",
+    "image": "swan.png"
+  },
+  {
+    "id": 52,
+    "swedish": "pingvin",
+    "english": "penguin",
+    "subject": "a black and white penguin with orange feet",
+    "image": "penguin.png"
+  },
+  {
+    "id": 53,
+    "swedish": "fisk",
+    "english": "fish",
+    "subject": "a simple orange fish with fins and a tail",
+    "image": "fish.png"
+  },
+  {
+    "id": 54,
+    "swedish": "haj",
+    "english": "shark",
+    "subject": "a blue shark with a clear dorsal fin",
+    "image": "shark.png"
+  },
+  {
+    "id": 55,
+    "swedish": "val",
+    "english": "whale",
+    "subject": "a large blue whale with a small water spout",
+    "image": "whale.png"
+  },
+  {
+    "id": 56,
+    "swedish": "delfin",
+    "english": "dolphin",
+    "subject": "a blue gray dolphin with a long curved body and pointed beak",
+    "image": "dolphin.png"
+  },
+  {
+    "id": 57,
+    "swedish": "säl",
+    "english": "seal",
+    "subject": "a gray seal with whiskers and flippers",
+    "image": "seal.png"
+  },
+  {
+    "id": 58,
+    "swedish": "krabba",
+    "english": "crab",
+    "subject": "a red crab with two big claws",
+    "image": "crab.png"
+  },
+  {
+    "id": 59,
+    "swedish": "räka",
+    "english": "shrimp",
+    "subject": "a pink shrimp with a curved segmented body and antennae",
+    "image": "shrimp.png"
+  },
+  {
+    "id": 60,
+    "swedish": "hamster",
+    "english": "hamster",
+    "subject": "a golden hamster with puffed cheeks and tiny paws",
+    "image": "hamster.png"
+  },
+  {
+    "id": 61,
+    "swedish": "pelikan",
+    "english": "pelican",
+    "subject": "a white pelican with a very large yellow bill and throat pouch",
+    "image": "pelican.png"
+  },
+  {
+    "id": 62,
+    "swedish": "äpple",
+    "english": "apple",
+    "subject": "one shiny red apple with a green leaf",
+    "image": "apple.png"
+  },
+  {
+    "id": 63,
+    "swedish": "päron",
+    "english": "pear",
+    "subject": "one green pear",
+    "image": "pear.png"
+  },
+  {
+    "id": 64,
+    "swedish": "banan",
+    "english": "banana",
+    "subject": "one curved yellow banana, unpeeled",
+    "image": "banana.png"
+  },
+  {
+    "id": 65,
+    "swedish": "citron",
+    "english": "lemon",
+    "subject": "one yellow lemon",
+    "image": "lemon.png"
+  },
+  {
+    "id": 66,
+    "swedish": "apelsin",
+    "english": "orange",
+    "subject": "one orange fruit with a small green leaf",
+    "image": "orange.png"
+  },
+  {
+    "id": 67,
+    "swedish": "melon",
+    "english": "melon",
+    "subject": "one green striped watermelon with a red wedge cut out",
+    "image": "melon.png"
+  },
+  {
+    "id": 68,
+    "swedish": "druva",
+    "english": "grape",
+    "subject": "a small bunch of purple grapes",
+    "image": "grape.png"
+  },
+  {
+    "id": 69,
+    "swedish": "kiwi",
+    "english": "kiwi",
+    "subject": "one brown kiwi fruit and its green cut half",
+    "image": "kiwi.png"
+  },
+  {
+    "id": 70,
+    "swedish": "mango",
+    "english": "mango",
+    "subject": "one orange-red mango fruit with one sliced cheek showing yellow flesh",
+    "image": "mango.png"
+  },
+  {
+    "id": 71,
+    "swedish": "persika",
+    "english": "peach",
+    "subject": "one fuzzy peach with a visible crease and green leaf",
+    "image": "peach.png"
+  },
+  {
+    "id": 72,
+    "swedish": "plommon",
+    "english": "plum",
+    "subject": "one purple plum with a green leaf",
+    "image": "plum.png"
+  },
+  {
+    "id": 73,
+    "swedish": "körsbär",
+    "english": "cherry",
+    "subject": "two red cherries joined by their green stems",
+    "image": "cherry.png"
+  },
+  {
+    "id": 74,
+    "swedish": "morot",
+    "english": "carrot",
+    "subject": "one orange carrot with leafy green tops",
+    "image": "carrot.png"
+  },
+  {
+    "id": 75,
+    "swedish": "tomat",
+    "english": "tomato",
+    "subject": "one ripe red tomato with a green leafy crown",
+    "image": "tomato.png"
+  },
+  {
+    "id": 76,
+    "swedish": "potatis",
+    "english": "potato",
+    "subject": "one brown potato with small eyes in its skin",
+    "image": "potato.png"
+  },
+  {
+    "id": 77,
+    "swedish": "lök",
+    "english": "onion",
+    "subject": "one golden brown onion with a short dried stem",
+    "image": "onion.png"
+  },
+  {
+    "id": 78,
+    "swedish": "majs",
+    "english": "corn",
+    "subject": "one yellow corn cob partially wrapped in green husks",
+    "image": "corn.png"
+  },
+  {
+    "id": 79,
+    "swedish": "bröd",
+    "english": "bread",
+    "subject": "one loaf of bread with a slice beside it",
+    "image": "bread.png"
+  },
+  {
+    "id": 80,
+    "swedish": "ost",
+    "english": "cheese",
+    "subject": "one yellow triangular wedge of cheese with holes",
+    "image": "cheese.png"
+  },
+  {
+    "id": 81,
+    "swedish": "kaka",
+    "english": "cookie",
+    "subject": "one round chocolate chip cookie",
+    "image": "cookie.png"
+  },
+  {
+    "id": 82,
+    "swedish": "tårta",
+    "english": "cake",
+    "subject": "one small round birthday cake with frosting and a single candle",
+    "image": "cake.png"
+  },
+  {
+    "id": 83,
+    "swedish": "pizza",
+    "english": "pizza",
+    "subject": "one triangular slice of cheese pizza with tomato topping",
+    "image": "pizza.png"
+  },
+  {
+    "id": 84,
+    "swedish": "muffin",
+    "english": "muffin",
+    "subject": "one blueberry muffin in a ridged paper wrapper",
+    "image": "muffin.png"
+  },
+  {
+    "id": 85,
+    "swedish": "ägg",
+    "english": "egg",
+    "subject": "one whole white egg and one half showing the yellow yolk",
+    "image": "egg.png"
+  },
+  {
+    "id": 86,
+    "swedish": "korv",
+    "english": "sausage",
+    "subject": "one curved browned sausage without bread",
+    "image": "sausage.png"
+  },
+  {
+    "id": 87,
+    "swedish": "hus",
+    "english": "house",
+    "subject": "one small red house with a roof, door and two windows",
+    "image": "house.png"
+  },
+  {
+    "id": 88,
+    "swedish": "slott",
+    "english": "castle",
+    "subject": "one fairytale stone castle with towers and a large gate",
+    "image": "castle.png"
+  },
+  {
+    "id": 89,
+    "swedish": "torn",
+    "english": "tower",
+    "subject": "one tall stone tower with battlements",
+    "image": "tower.png"
+  },
+  {
+    "id": 90,
+    "swedish": "bro",
+    "english": "bridge",
+    "subject": "one simple arched stone bridge, isolated without a landscape",
+    "image": "bridge.png"
+  },
+  {
+    "id": 91,
+    "swedish": "tält",
+    "english": "tent",
+    "subject": "one green triangular camping tent with its entrance visible",
+    "image": "tent.png"
+  },
+  {
+    "id": 92,
+    "swedish": "båt",
+    "english": "boat",
+    "subject": "one small sailboat with a blue hull and white sail",
+    "image": "boat.png"
+  },
+  {
+    "id": 93,
+    "swedish": "bil",
+    "english": "car",
+    "subject": "one bright red passenger car viewed three-quarter from the side",
+    "image": "car.png"
+  },
+  {
+    "id": 94,
+    "swedish": "buss",
+    "english": "bus",
+    "subject": "one yellow bus viewed three-quarter from the side with blank sign panels",
+    "image": "bus.png"
+  },
+  {
+    "id": 95,
+    "swedish": "tåg",
+    "english": "train",
+    "subject": "one friendly colorful train locomotive viewed three-quarter from the side",
+    "image": "train.png"
+  },
+  {
+    "id": 96,
+    "swedish": "cykel",
+    "english": "bike",
+    "subject": "one blue bicycle with two wheels, pedals and handlebars",
+    "image": "bike.png"
+  },
+  {
+    "id": 97,
+    "swedish": "raket",
+    "english": "rocket",
+    "subject": "one red and white space rocket with fins and a small flame",
+    "image": "rocket.png"
+  },
+  {
+    "id": 98,
+    "swedish": "traktor",
+    "english": "tractor",
+    "subject": "one green farm tractor with large rear wheels",
+    "image": "tractor.png"
+  },
+  {
+    "id": 99,
+    "swedish": "stol",
+    "english": "chair",
+    "subject": "one wooden chair with a seat, back and four legs",
+    "image": "chair.png"
+  },
+  {
+    "id": 100,
+    "swedish": "bord",
+    "english": "table",
+    "subject": "one wooden table with four legs",
+    "image": "table.png"
+  },
+  {
+    "id": 101,
+    "swedish": "säng",
+    "english": "bed",
+    "subject": "one small wooden bed with a pillow and blue blanket",
+    "image": "bed.png"
+  },
+  {
+    "id": 102,
+    "swedish": "soffa",
+    "english": "sofa",
+    "subject": "one cozy green two-seat sofa",
+    "image": "sofa.png"
+  },
+  {
+    "id": 103,
+    "swedish": "fönster",
+    "english": "window",
+    "subject": "one blue-framed rectangular window with four glass panes",
+    "image": "window.png"
+  },
+  {
+    "id": 104,
+    "swedish": "lampa",
+    "english": "lamp",
+    "subject": "one yellow table lamp with a shade and a round base",
+    "image": "lamp.png"
+  },
+  {
+    "id": 105,
+    "swedish": "klocka",
+    "english": "clock",
+    "subject": "one round wall clock with clear hands and tick marks but no numerals",
+    "image": "clock.png"
+  },
+  {
+    "id": 106,
+    "swedish": "spegel",
+    "english": "mirror",
+    "subject": "one oval mirror in a golden frame with a handle",
+    "image": "mirror.png"
+  },
+  {
+    "id": 107,
+    "swedish": "bok",
+    "english": "book",
+    "subject": "one closed blue book with a completely blank cover",
+    "image": "book.png"
+  },
+  {
+    "id": 108,
+    "swedish": "penna",
+    "english": "pencil",
+    "subject": "one sharpened yellow wooden pencil with a pink eraser",
+    "image": "pencil.png"
+  },
+  {
+    "id": 109,
+    "swedish": "linjal",
+    "english": "ruler",
+    "subject": "one wooden ruler with simple tick marks but no numbers",
+    "image": "ruler.png"
+  },
+  {
+    "id": 110,
+    "swedish": "nyckel",
+    "english": "key",
+    "subject": "one large golden metal key",
+    "image": "key.png"
+  },
+  {
+    "id": 111,
+    "swedish": "tallrik",
+    "english": "plate",
+    "subject": "one simple blue round dinner plate",
+    "image": "plate.png"
+  },
+  {
+    "id": 112,
+    "swedish": "handduk",
+    "english": "towel",
+    "subject": "one folded fluffy blue towel",
+    "image": "towel.png"
+  },
+  {
+    "id": 113,
+    "swedish": "present",
+    "english": "gift",
+    "subject": "one wrapped gift box with a red ribbon bow",
+    "image": "gift.png"
+  },
+  {
+    "id": 114,
+    "swedish": "hammare",
+    "english": "hammer",
+    "subject": "one claw hammer with a wooden handle",
+    "image": "hammer.png"
+  },
+  {
+    "id": 115,
+    "swedish": "tärning",
+    "english": "dice",
+    "subject": "one white six-sided die with black pips",
+    "image": "dice.png"
+  },
+  {
+    "id": 116,
+    "swedish": "batteri",
+    "english": "battery",
+    "subject": "one cylindrical battery with contrasting colored ends and no text",
+    "image": "battery.png"
+  },
+  {
+    "id": 117,
+    "swedish": "telefon",
+    "english": "phone",
+    "subject": "one recognizable blue telephone handset resting on a classic telephone base",
+    "image": "phone.png"
+  },
+  {
+    "id": 118,
+    "swedish": "diamant",
+    "english": "diamond",
+    "subject": "one faceted light blue diamond gemstone",
+    "image": "diamond.png"
+  },
+  {
+    "id": 119,
+    "swedish": "ballong",
+    "english": "balloon",
+    "subject": "one round red balloon with a tied end and curling string",
+    "image": "balloon.png"
+  }
+]

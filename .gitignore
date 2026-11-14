@@ -1,2 +1,12 @@
 __pycache__/
 *.py[cod]
+/target/
+/NumberCatch.exe
+/NumberCatch.settings
+/NumberCatch-error.log
+
+# Check in the portable release; binary files use Git LFS.
+!/dist/
+!/dist/**
+/dist/NumberCatch.settings
+/dist/NumberCatch-error.log
