@@ -16,6 +16,7 @@ Fånga uträkningar vars svar är lika med måltalet. Varje uträkning räknas f
 - Var tredje nivå (3, 6, 9, ...) använder **bara subtraktion**.
 - Subtraktionsnivåerna har mindre tal, lägre fallhastighet och längre tid mellan uppgifterna. Den första använder bara talen 1–3 och svaren 1–2.
 - Båda typerna blir gradvis svårare. Hastigheten ökar långsammare än i den tidigare Python-versionen.
+- Rätt additionssvar blandas jämnt mellan alla positiva talpar. För målet 10 används 1+9, 2+8, 3+7, 4+6 och 5+5 innan ett talpar upprepas; ordningen på termerna kan också växla. Subtraktionens giltiga varianter blandas på samma sätt.
 
 ### Läsning
 
@@ -30,6 +31,8 @@ Spelet innehåller **120 olika illustrerade saker**, med både svenska och engel
 | 5–6 | 5 bokstäver |
 | 7–8 | 6 bokstäver |
 | 9 och högre | 7 bokstäver |
+
+Första ordet är ibland rätt, men högst två omgångar i rad börjar med rätt ord. Rätta och felaktiga ord blandas i små, balanserade grupper, och felorden varierar också.
 
 De andra orden som faller har samma längd som målbildens ord. Bilderna har inga ord eller etiketter som avslöjar svaret.
 

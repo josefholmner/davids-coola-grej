@@ -31,6 +31,12 @@ impl Rng {
         debug_assert!(low <= high);
         low + (self.fraction() * (high - low + 1) as f32) as i32
     }
+    pub fn shuffle<T>(&mut self, values: &mut [T]) {
+        for index in (1..values.len()).rev() {
+            let other = self.index(index + 1);
+            values.swap(index, other);
+        }
+    }
     pub fn index(&mut self, length: usize) -> usize {
         self.integer(0, length as i32 - 1) as usize
     }
@@ -51,6 +57,13 @@ impl Difficulty {
             (3 + (self.0 / 3 - 1) as i32).min(999)
         } else {
             (3 + (((self.0 - 1) * 2 + 1) / 3) as i32).min(9999)
+        }
+    }
+    pub fn operand_limit(self, target: i32) -> i32 {
+        if self.subtraction() {
+            self.max_operand()
+        } else {
+            self.max_operand().max(target - 1)
         }
     }
     pub fn min_target(self) -> i32 {
@@ -116,8 +129,11 @@ impl Problem {
     }
 }
 pub fn make_problem(target: i32, d: Difficulty, rng: &mut Rng) -> Problem {
-    let cap = d.max_operand();
     let matching = rng.fraction() < 0.5;
+    make_problem_with_match(target, d, rng, matching)
+}
+fn make_problem_with_match(target: i32, d: Difficulty, rng: &mut Rng, matching: bool) -> Problem {
+    let cap = d.operand_limit(target);
     if d.subtraction() {
         let mut answer = target;
         if !matching {
@@ -152,6 +168,52 @@ pub fn make_problem(target: i32, d: Difficulty, rng: &mut Rng) -> Problem {
         }
     }
 }
+// Small shuffled bags keep the mix fair while preventing long accidental runs.
+#[derive(Default)]
+struct MatchBag {
+    remaining: Vec<bool>,
+    last: Option<bool>,
+    streak: usize,
+}
+impl MatchBag {
+    fn observe(&mut self, value: bool) {
+        self.streak = if self.last == Some(value) {
+            self.streak + 1
+        } else {
+            1
+        };
+        self.last = Some(value);
+    }
+    fn after_first(value: bool, rng: &mut Rng) -> Self {
+        let mut remaining = vec![true, false, !value];
+        rng.shuffle(&mut remaining);
+        Self {
+            remaining,
+            last: Some(value),
+            streak: 1,
+        }
+    }
+    fn next(&mut self, rng: &mut Rng) -> bool {
+        if self.remaining.is_empty() {
+            self.remaining = vec![true, true, false, false];
+            rng.shuffle(&mut self.remaining);
+        }
+        let end = self.remaining.len() - 1;
+        if self.streak >= 2 && self.last == Some(self.remaining[end]) {
+            if let Some(other) = self
+                .remaining
+                .iter()
+                .position(|value| Some(*value) != self.last)
+            {
+                self.remaining.swap(other, end);
+            }
+        }
+        let value = self.remaining.pop().unwrap();
+        self.observe(value);
+        value
+    }
+}
+
 #[derive(Clone, Copy)]
 pub enum Content {
     Math(Problem),
@@ -299,6 +361,14 @@ pub struct Game {
     pub message_time: f32,
     pub feedback: Option<Feedback>,
     pub pending_sound: Option<FeedbackKind>,
+    opening_order: MatchBag,
+    match_order: MatchBag,
+    round_key: Option<(Mode, Language, u32, i32)>,
+    round_spawns: usize,
+    math_choices: Vec<Problem>,
+    last_math_choice: Option<Problem>,
+    word_choices: Vec<usize>,
+    last_wrong_word: Option<usize>,
 }
 impl Game {
     #[cfg(test)]
@@ -339,6 +409,14 @@ impl Game {
             message_time: 5.0,
             feedback: None,
             pending_sound: None,
+            opening_order: MatchBag::default(),
+            match_order: MatchBag::default(),
+            round_key: None,
+            round_spawns: 0,
+            math_choices: Vec::new(),
+            last_math_choice: None,
+            word_choices: Vec::new(),
+            last_wrong_word: None,
         }
     }
     pub fn clear_input(&mut self) {
@@ -346,21 +424,103 @@ impl Game {
         self.right = false;
         self.mouse_x = None;
     }
+    fn correct_problem(&mut self, d: Difficulty) -> Problem {
+        let target = self.rules.target;
+        if self.math_choices.is_empty() {
+            self.math_choices = if d.subtraction() {
+                (1..=d.max_operand() - target)
+                    .map(|right| Problem {
+                        left: target + right,
+                        right,
+                        op: Op::Subtract,
+                    })
+                    .collect()
+            } else {
+                // Give each unordered pair equal weight: 5+5 is one family,
+                // just like 1+9. Orientation varies separately for practice.
+                (1..=target / 2)
+                    .map(|left| Problem {
+                        left,
+                        right: target - left,
+                        op: Op::Add,
+                    })
+                    .collect()
+            };
+            self.rng.shuffle(&mut self.math_choices);
+            let end = self.math_choices.len() - 1;
+            if self.math_choices.len() > 1
+                && self.last_math_choice.as_ref().is_some_and(|last| {
+                    let next = &self.math_choices[end];
+                    last.left == next.left && last.right == next.right
+                })
+            {
+                self.math_choices.swap(0, end);
+            }
+        }
+        let mut problem = self.math_choices.pop().unwrap();
+        self.last_math_choice = Some(problem);
+        if problem.op == Op::Add && problem.left != problem.right && self.rng.fraction() < 0.5 {
+            std::mem::swap(&mut problem.left, &mut problem.right);
+        }
+        problem
+    }
+    fn wrong_word(&mut self) -> usize {
+        if self.word_choices.is_empty() {
+            self.word_choices = vocabulary::pool(self.rules.level, self.rules.language)
+                .into_iter()
+                .filter(|id| *id != self.rules.target_word)
+                .collect();
+            self.rng.shuffle(&mut self.word_choices);
+            let end = self.word_choices.len() - 1;
+            if self.word_choices.len() > 1 && self.last_wrong_word == Some(self.word_choices[end]) {
+                self.word_choices.swap(0, end);
+            }
+        }
+        let word = self.word_choices.pop().unwrap();
+        self.last_wrong_word = Some(word);
+        word
+    }
     pub fn spawn(&mut self) {
+        let target = if self.rules.mode == Mode::Math {
+            self.rules.target
+        } else {
+            self.rules.target_word as i32
+        };
+        let key = (
+            self.rules.mode,
+            self.rules.language,
+            self.rules.level,
+            target,
+        );
+        if self.round_key != Some(key) {
+            self.round_key = Some(key);
+            self.round_spawns = 0;
+            self.math_choices.clear();
+            self.last_math_choice = None;
+            self.word_choices.clear();
+            self.last_wrong_word = None;
+        }
+        let matching = if self.round_spawns == 0 {
+            let first = self.opening_order.next(&mut self.rng);
+            self.match_order = MatchBag::after_first(first, &mut self.rng);
+            first
+        } else {
+            self.match_order.next(&mut self.rng)
+        };
+        self.round_spawns += 1;
         let d = self.rules.difficulty();
         let content = if self.rules.mode == Mode::Math {
-            Content::Math(make_problem(self.rules.target, d, &mut self.rng))
+            Content::Math(if matching {
+                self.correct_problem(d)
+            } else {
+                make_problem_with_match(self.rules.target, d, &mut self.rng, false)
+            })
         } else {
-            let mut index = self.rules.target_word;
-            if self.rng.fraction() >= 0.5 {
-                let pool = vocabulary::pool(self.rules.level, self.rules.language);
-                let mut pick = self.rng.index(pool.len());
-                if pool[pick] == index {
-                    pick = (pick + 1) % pool.len();
-                }
-                index = pool[pick];
-            }
-            Content::Word(index)
+            Content::Word(if matching {
+                self.rules.target_word
+            } else {
+                self.wrong_word()
+            })
         };
         let half_width = (content.label(self.rules.language).chars().count() as f32 * 9.0 + 14.0)
             .clamp(48.0, 300.0);
@@ -483,6 +643,7 @@ impl Game {
                     )
                 }
             }
+            self.round_spawns = 0;
             self.message_time = 3.5;
             self.drops.clear();
             self.spawn_in = 1.0;
@@ -600,7 +761,9 @@ mod tests {
                         }
                     );
                     assert!(p.left > 0 && p.right > 0 && p.answer() > 0);
-                    assert!(p.left <= d.max_operand() && p.right <= d.max_operand());
+                    assert!(
+                        p.left <= d.operand_limit(target) && p.right <= d.operand_limit(target)
+                    );
                     correct += (p.answer() == target) as usize;
                 }
                 assert!((50..150).contains(&correct));
@@ -714,6 +877,114 @@ mod tests {
             assert!(game.feedback.as_ref().unwrap().age > 0.0);
             game.update(0.8);
             assert!(game.feedback.is_none());
+        }
+    }
+    #[test]
+    fn opening_answers_are_balanced_without_long_streaks() {
+        for language in [Language::Swedish, Language::English] {
+            let mut game = Game::for_mode(Mode::Reading, language);
+            game.rng = Rng::seeded(83);
+            let mut streak = 0;
+            let mut previous = None;
+            let mut matches = 0;
+            for round in 0..400 {
+                // Includes retries on the same target, not just new pictures.
+                game.round_spawns = 0;
+                game.spawn();
+                let correct = matches!(game.drops.last().unwrap().content,Content::Word(id) if id==game.rules.target_word);
+                streak = if previous == Some(correct) {
+                    streak + 1
+                } else {
+                    1
+                };
+                previous = Some(correct);
+                assert!(streak <= 2);
+                matches += correct as usize;
+                if round % 4 == 3 {
+                    assert_eq!(matches, (round + 1) / 2);
+                }
+                if round % 3 == 0 {
+                    game.rules.new_target(&mut game.rng);
+                }
+                game.drops.clear();
+            }
+        }
+    }
+    #[test]
+    fn each_round_has_even_mix_with_no_long_runs() {
+        let mut game = Game::for_mode(Mode::Reading, Language::Swedish);
+        game.rng = Rng::seeded(42);
+        for _ in 0..30 {
+            game.rules.new_target(&mut game.rng);
+            let mut correct_count = 0;
+            let mut streak = 0;
+            let mut last = None;
+            for index in 0..40 {
+                game.spawn();
+                let correct = matches!(game.drops.last().unwrap().content,Content::Word(id) if id==game.rules.target_word);
+                correct_count += correct as usize;
+                streak = if last == Some(correct) { streak + 1 } else { 1 };
+                last = Some(correct);
+                assert!(streak <= 2);
+                if index % 4 == 3 {
+                    assert_eq!(correct_count, (index + 1) / 2);
+                }
+            }
+            game.drops.clear();
+        }
+    }
+    #[test]
+    fn goal_ten_cycles_all_addition_families_evenly() {
+        let mut game = Game::new();
+        game.rng = Rng::seeded(42);
+        game.rules.level = 4;
+        game.rules.target = 10;
+        let mut families = std::collections::BTreeMap::new();
+        let mut previous = None;
+        let mut index = 0;
+        while index < 50 {
+            game.spawn();
+            let Content::Math(problem) = game.drops.pop().unwrap().content else {
+                panic!("Word in math mode");
+            };
+            if problem.answer() != 10 {
+                continue;
+            }
+            assert_eq!(problem.answer(), 10);
+            let family = (
+                problem.left.min(problem.right),
+                problem.left.max(problem.right),
+            );
+            assert_ne!(previous, Some(family));
+            previous = Some(family);
+            *families.entry(family).or_insert(0) += 1;
+            if index == 4 {
+                assert_eq!(families.len(), 5);
+            }
+            index += 1;
+        }
+        assert_eq!(families.len(), 5);
+        assert!(families.values().all(|count| *count == 10));
+    }
+    #[test]
+    fn subtraction_variations_cycle_and_single_option_is_safe() {
+        let mut game = Game::new();
+        game.rules.level = 9;
+        game.rules.target = 1;
+        let mut choices = std::collections::BTreeSet::new();
+        for _ in 0..4 {
+            let p = game.correct_problem(Difficulty(9));
+            assert_eq!(p.answer(), 1);
+            choices.insert((p.left, p.right));
+        }
+        assert_eq!(choices.len(), 4);
+        game.math_choices.clear();
+        game.last_math_choice = None;
+        game.rules.level = 3;
+        game.rules.target = 2;
+        for _ in 0..10 {
+            let p = game.correct_problem(Difficulty(3));
+            assert_eq!((p.left, p.right), (3, 1));
         }
     }
 }
