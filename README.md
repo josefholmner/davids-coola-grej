@@ -50,6 +50,10 @@ Ett fullvuxet träd tar dig till nästa nivå, med en ny bakgrundsfärg och ett 
 
 Spelet pausas automatiskt när du byter till ett annat program.
 
+Rätt fångst ger en kort uppåtgående klang, gröna gnistor och en liten studs vid korgen. Fel fångst ger en lägre ton, rosa partiklar och en kort skakning. Ljuden är inbyggda och fungerar utan separata ljudfiler.
+
+Helskärm täcker även aktivitetsfältet. När du byter till ett annat program släpps fönstrets översta placering, och normal fönsterordning återställs när du lämnar helskärm.
+
 ## Grafik
 
 Text, träd, fjärilar och spelobjekt ritas med kantutjämnade vektorformer direkt i fönstrets verkliga pixelupplösning. Helskärm använder bildskärmens upplösning; ingen lågupplöst 1000×700-bild förstoras. Programmet är Per-Monitor V2 DPI-medvetet och behåller proportionerna på olika skärmar. Endast en färdigritad bildruta visas åt gången för att undvika blinkningar.

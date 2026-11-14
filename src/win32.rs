@@ -328,3 +328,13 @@ pub unsafe fn release_stream(stream: Handle) {
         ((*vtable).release)(stream);
     }
 }
+
+#[link(name = "winmm")]
+extern "system" {
+    pub fn PlaySoundW(sound: *const u16, module: Handle, flags: u32) -> i32;
+}
+#[link(name = "user32")]
+extern "system" {
+    pub fn LoadIconW(instance: Handle, name: *const u16) -> Handle;
+    pub fn WindowFromPoint(point: Point) -> Hwnd;
+}

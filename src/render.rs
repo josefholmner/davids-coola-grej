@@ -1,5 +1,7 @@
 use crate::app::{Application, Screen};
-use crate::game::{Game, Mode, BASKET_HALF, BASKET_Y, FULL, HEIGHT, PLAY_RIGHT, WIDTH};
+use crate::game::{
+    FeedbackKind, Game, Mode, BASKET_HALF, BASKET_Y, FULL, HEIGHT, PLAY_RIGHT, WIDTH,
+};
 use crate::language::Language;
 use crate::vocabulary::{IMAGES, WORDS};
 use crate::win32::*;
@@ -773,8 +775,17 @@ fn scene(p: &mut Painter, game: &Game, picture: Option<Gp>) {
             0xf3f7ff,
         );
     }
-    let x = game.basket_x;
-    let y = BASKET_Y;
+    let effect = game.feedback.as_ref();
+    let shake = effect
+        .filter(|f| f.kind == FeedbackKind::Wrong)
+        .map_or(0.0, |f| (f.age * 65.0).sin() * 6.0 * (1.0 - f.age / 0.85));
+    let bounce = effect
+        .filter(|f| f.kind == FeedbackKind::Correct)
+        .map_or(0.0, |f| {
+            (f.age * 12.0).sin().max(0.0) * 7.0 * (1.0 - f.age / 0.85)
+        });
+    let x = game.basket_x + shake;
+    let y = BASKET_Y - bounce;
     p.ellipse(x - 61.0, y + 29.0, 122.0, 12.0, 0x0d1c24);
     p.polygon(
         &[
@@ -826,6 +837,7 @@ fn scene(p: &mut Painter, game: &Game, picture: Option<Gp>) {
         12,
         0xc3d0e2,
     );
+    catch_feedback(p, game);
     tree(p, game);
     if game.paused {
         p.round_rect(104.0, 285.0, 512.0, 196.0, 22.0, 0x0e1c29);
@@ -858,6 +870,76 @@ fn scene(p: &mut Painter, game: &Game, picture: Option<Gp>) {
             0x78e7c1,
         );
     }
+}
+
+fn catch_feedback(p: &mut Painter, game: &Game) {
+    let Some(feedback) = &game.feedback else {
+        return;
+    };
+    let t = (feedback.age / 0.85).clamp(0.0, 1.0);
+    let correct = feedback.kind == FeedbackKind::Correct;
+    let color = if correct { 0x9cf5be } else { 0xffa3a7 };
+    let x = feedback.x;
+    let y = BASKET_Y - 12.0;
+    for i in 0..8 {
+        let angle = i as f32 * std::f32::consts::TAU / 8.0;
+        let radius = 15.0 + t * 43.0;
+        let px = x + angle.cos() * radius;
+        let py = y + angle.sin() * radius * 0.48 - if correct { t * 35.0 } else { -t * 5.0 };
+        let size = (1.0 - t) * 5.0;
+        if correct {
+            p.line(px - size, py, px + size, py, 2.0, color);
+            p.line(px, py - size, px, py + size, 2.0, color);
+        } else {
+            p.ellipse(px - size / 2.0, py - size / 2.0, size, size, color);
+        }
+    }
+    let center_y = y - 34.0 - t * 24.0;
+    if t < 0.65 {
+        let gx = x.clamp(80.0, PLAY_RIGHT - 80.0);
+        if correct {
+            p.line(gx - 8.0, center_y, gx - 2.0, center_y + 6.0, 3.0, color);
+            p.line(
+                gx - 2.0,
+                center_y + 6.0,
+                gx + 10.0,
+                center_y - 8.0,
+                3.0,
+                color,
+            );
+        } else {
+            p.line(
+                gx - 7.0,
+                center_y - 7.0,
+                gx + 7.0,
+                center_y + 7.0,
+                3.0,
+                color,
+            );
+            p.line(
+                gx - 7.0,
+                center_y + 7.0,
+                gx + 7.0,
+                center_y - 7.0,
+                3.0,
+                color,
+            );
+        }
+    }
+    let language = game.rules.language;
+    let label = if correct {
+        language.text("Rätt!", "Correct!")
+    } else {
+        language.text("Försök igen", "Try again")
+    };
+    p.center(
+        x.clamp(85.0, PLAY_RIGHT - 85.0),
+        center_y - 29.0,
+        170.0,
+        label,
+        18,
+        color,
+    );
 }
 
 fn tree(p: &mut Painter, game: &Game) {

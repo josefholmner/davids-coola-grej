@@ -1,5 +1,6 @@
 #![cfg_attr(not(test), windows_subsystem = "windows")]
 mod app;
+mod audio;
 mod game;
 mod language;
 mod render;
@@ -21,6 +22,7 @@ enum Event {
     Mouse(i32, i32),
     Click(i32, i32),
     FocusLost,
+    FocusGained,
     Resize,
     Dpi(Rect),
 }
@@ -91,6 +93,10 @@ unsafe extern "system" fn window_proc(
             });
             0
         }
+        0x0007 => {
+            host.events.push_back(Event::FocusGained);
+            0
+        }
         0x0008 => {
             host.events.push_back(Event::FocusLost);
             0
@@ -119,6 +125,21 @@ impl Fullscreen {
             placement: Placement::default(),
         }
     }
+    fn set_active(&self, hwnd: Hwnd, active: bool) {
+        if self.active {
+            unsafe {
+                SetWindowPos(
+                    hwnd,
+                    if active { -1isize } else { -2isize } as Hwnd,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0x13,
+                );
+            }
+        }
+    }
     fn toggle(&mut self, hwnd: Hwnd) -> Result<(), String> {
         unsafe {
             if !self.active {
@@ -137,20 +158,20 @@ impl Fullscreen {
                     return Err(error("Reading monitor resolution"));
                 }
                 let r = monitor.monitor;
-                SetWindowLongPtrW(hwnd, -16, 0x80000000);
+                SetWindowLongPtrW(hwnd, -16, 0x90000000);
                 SetWindowPos(
                     hwnd,
-                    NULL,
+                    -1isize as Hwnd,
                     r.left,
                     r.top,
                     r.right - r.left,
                     r.bottom - r.top,
-                    0x224,
+                    0x260,
                 );
             } else {
                 SetWindowLongPtrW(hwnd, -16, self.style);
                 SetWindowPlacement(hwnd, &self.placement);
-                SetWindowPos(hwnd, NULL, 0, 0, 0, 0, 0x237);
+                SetWindowPos(hwnd, -2isize as Hwnd, 0, 0, 0, 0, 0x233);
             }
             self.active = !self.active;
             Ok(())
@@ -202,7 +223,7 @@ fn run_window(smoke: Option<&str>) -> Result<(), String> {
             cls_extra: 0,
             wnd_extra: 0,
             instance,
-            icon: NULL,
+            icon: LoadIconW(instance, 1usize as *const u16),
             cursor: LoadCursorW(NULL, 32512usize as *const u16),
             background: NULL,
             menu: std::ptr::null(),
@@ -250,6 +271,7 @@ fn run_window(smoke: Option<&str>) -> Result<(), String> {
             closed: false,
         });
         SetWindowLongPtrW(hwnd, -21, (&mut *host as *mut Host) as isize);
+        let audio = audio::Audio::new();
         let mut renderer = Renderer::new()?;
         let mut app = Application::new(if smoke.is_some() {
             Language::Swedish
@@ -271,6 +293,11 @@ fn run_window(smoke: Option<&str>) -> Result<(), String> {
         let mut min_gdi = u32::MAX;
         let mut max_gdi = 0;
         let mut modes_verified = false;
+        let mut fullscreen_covered = false;
+        let mut restored_z_order = false;
+        let mut sounds_requested = 0usize;
+        let mut sounds_accepted = 0usize;
+        let icon_loaded = !class.icon.is_null();
         if smoke.is_none() {
             ShowWindow(hwnd, 5);
         } else {
@@ -308,6 +335,10 @@ fn run_window(smoke: Option<&str>) -> Result<(), String> {
                         app.game.left = held.contains(&37) || held.contains(&65);
                         app.game.right = held.contains(&39) || held.contains(&68);
                         app.update(dt);
+                        if let Some(kind) = app.game.pending_sound.take() {
+                            sounds_requested += 1;
+                            sounds_accepted += audio.play(kind) as usize;
+                        }
                         host.redraw = true;
                         if let Some(report) = smoke {
                             smoke_ticks += 1;
@@ -319,10 +350,20 @@ fn run_window(smoke: Option<&str>) -> Result<(), String> {
                                 let r = client_rect(hwnd);
                                 full_size = (r.right, r.bottom);
                             }
+                            if smoke_ticks == 10 {
+                                let mut rect = Rect::default();
+                                GetWindowRect(hwnd, &mut rect);
+                                fullscreen_covered = GetWindowLongPtrW(hwnd, -20) & 8 != 0
+                                    && WindowFromPoint(Point {
+                                        x: (rect.left + rect.right) / 2,
+                                        y: rect.bottom - 2,
+                                    }) == hwnd;
+                            }
                             if smoke_ticks == 20 {
                                 full.toggle(hwnd)?;
                                 let r = client_rect(hwnd);
                                 restored_size = (r.right, r.bottom);
+                                restored_z_order = GetWindowLongPtrW(hwnd, -20) & 8 == 0;
                             }
                             if smoke_ticks == 25 {
                                 app.menu();
@@ -345,6 +386,30 @@ fn run_window(smoke: Option<&str>) -> Result<(), String> {
                                 app.game.rules.level = 3;
                                 app.game.rules.new_target(&mut app.game.rng);
                             }
+                            if smoke_ticks == 45 || smoke_ticks == 49 {
+                                app.game.paused = false;
+                                let correct = smoke_ticks == 45;
+                                let mut problem = game::make_problem(
+                                    app.game.rules.target,
+                                    app.game.rules.difficulty(),
+                                    &mut app.game.rng,
+                                );
+                                while (problem.answer() == app.game.rules.target) != correct {
+                                    problem = game::make_problem(
+                                        app.game.rules.target,
+                                        app.game.rules.difficulty(),
+                                        &mut app.game.rng,
+                                    );
+                                }
+                                app.game.drops.clear();
+                                app.game.drops.push(Drop {
+                                    x: app.game.basket_x,
+                                    y: game::BASKET_Y - 22.0,
+                                    half_width: 48.0,
+                                    speed: 100.0,
+                                    content: Content::Math(problem),
+                                });
+                            }
                             if smoke_ticks > 55 {
                                 let n = GetGuiResources(GetCurrentProcess(), 0);
                                 min_gdi = min_gdi.min(n);
@@ -356,6 +421,10 @@ fn run_window(smoke: Option<&str>) -> Result<(), String> {
                                     -4isize as Handle,
                                 ) != 0;
                                 let passed = aware
+                                    && fullscreen_covered
+                                    && restored_z_order
+                                    && icon_loaded
+                                    && sounds_requested == 2
                                     && modes_verified
                                     && full_size.0 > 0
                                     && full_size.1 > 0
@@ -363,6 +432,7 @@ fn run_window(smoke: Option<&str>) -> Result<(), String> {
                                     && max_buffer == full_size
                                     && max_gdi - min_gdi < 4;
                                 let text=format!("{{\n  \"passed\": {passed},\n  \"menu_settings_and_both_modes\": {modes_verified},\n  \"per_monitor_v2\": {aware},\n  \"window\": [{}, {}],\n  \"fullscreen\": [{}, {}],\n  \"restored\": [{}, {}],\n  \"largest_native_buffer\": [{}, {}],\n  \"gdi_handles_min\": {min_gdi},\n  \"gdi_handles_max\": {max_gdi},\n  \"frames\": {smoke_ticks}\n}}\n",initial.right,initial.bottom,full_size.0,full_size.1,restored_size.0,restored_size.1,max_buffer.0,max_buffer.1);
+                                let text = text.replacen("{", &format!("{{\n  \"fullscreen_covers_taskbar\": {fullscreen_covered},\n  \"windowed_z_order_restored\": {restored_z_order},\n  \"icon_loaded\": {icon_loaded},\n  \"feedback_sound_requests\": {sounds_requested},\n  \"audio_requests_accepted\": {sounds_accepted},"), 1);
                                 std::fs::write(report, text).map_err(|e| e.to_string())?;
                                 if !passed {
                                     failure=Some("The automated Windows rendering check failed. See its report.".into());
@@ -409,7 +479,13 @@ fn run_window(smoke: Option<&str>) -> Result<(), String> {
                         quit |= apply_action(action, &mut app, &mut full, hwnd, &mut held)?;
                         host.redraw = true;
                     }
+                    Event::FocusGained => {
+                        full.set_active(hwnd, true);
+                        host.redraw = true;
+                    }
                     Event::FocusLost => {
+                        full.set_active(hwnd, false);
+                        audio.stop();
                         held.clear();
                         app.game.clear_input();
                         if app.screen == Screen::Playing {
@@ -479,6 +555,13 @@ fn preview(
         SetProcessDpiAwarenessContext(-4isize as Handle);
     }
     let mut app = Application::new(language);
+    let (kind, feedback_kind) = if let Some(kind) = kind.strip_prefix("correct-") {
+        (kind, Some(game::FeedbackKind::Correct))
+    } else if let Some(kind) = kind.strip_prefix("wrong-") {
+        (kind, Some(game::FeedbackKind::Wrong))
+    } else {
+        (kind, None)
+    };
     match kind {
         "menu" => {}
         "settings" => app.screen = Screen::Settings,
@@ -547,6 +630,13 @@ fn preview(
     app.game.rules.growth = 5;
     app.game.display_growth = 5.0;
     app.game.animation = 1.4;
+    if let Some(kind) = feedback_kind {
+        app.game.feedback = Some(game::Feedback {
+            kind,
+            x: app.game.basket_x,
+            age: 0.18,
+        });
+    }
     let mut renderer = Renderer::new()?;
     let dc = unsafe { GetDC(NULL) };
     let result = renderer

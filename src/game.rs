@@ -272,6 +272,16 @@ pub struct Drop {
     pub speed: f32,
     pub content: Content,
 }
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum FeedbackKind {
+    Correct,
+    Wrong,
+}
+pub struct Feedback {
+    pub kind: FeedbackKind,
+    pub x: f32,
+    pub age: f32,
+}
 pub struct Game {
     pub rules: Rules,
     pub rng: Rng,
@@ -287,6 +297,8 @@ pub struct Game {
     pub spawn_in: f32,
     pub message: String,
     pub message_time: f32,
+    pub feedback: Option<Feedback>,
+    pub pending_sound: Option<FeedbackKind>,
 }
 impl Game {
     #[cfg(test)]
@@ -325,6 +337,8 @@ impl Game {
             spawn_in: 1.2,
             message,
             message_time: 5.0,
+            feedback: None,
+            pending_sound: None,
         }
     }
     pub fn clear_input(&mut self) {
@@ -369,6 +383,16 @@ impl Game {
         if self.paused {
             return;
         }
+        if let Some(feedback) = &mut self.feedback {
+            feedback.age += dt;
+        }
+        if self
+            .feedback
+            .as_ref()
+            .is_some_and(|feedback| feedback.age >= 0.85)
+        {
+            self.feedback = None;
+        }
         self.animation += dt;
         self.message_time = (self.message_time - dt).max(0.0);
         if self.transition > 0.0 {
@@ -409,6 +433,17 @@ impl Game {
                 Content::Math(problem) => self.rules.catch(problem, &mut self.rng),
                 Content::Word(word) => self.rules.catch_word(word, &mut self.rng),
             };
+            let kind = if matches!(result, Outcome::Correct | Outcome::LevelUp) {
+                FeedbackKind::Correct
+            } else {
+                FeedbackKind::Wrong
+            };
+            self.feedback = Some(Feedback {
+                kind,
+                x: self.basket_x,
+                age: 0.0,
+            });
+            self.pending_sound = Some(kind);
             let language = self.rules.language;
             match result {
                 Outcome::LevelUp => {
@@ -646,5 +681,39 @@ mod tests {
         game.update(0.02);
         assert_eq!(game.rules.growth, 3);
         assert_eq!(game.rules.score, 30);
+    }
+    #[test]
+    fn catches_create_one_sound_event_and_finite_visual_feedback() {
+        for correct in [true, false] {
+            let mut game = Game::for_mode(Mode::Reading, Language::Swedish);
+            let word = if correct {
+                game.rules.target_word
+            } else {
+                vocabulary::pool(1, Language::Swedish)
+                    .into_iter()
+                    .find(|id| *id != game.rules.target_word)
+                    .unwrap()
+            };
+            game.drops.push(Drop {
+                x: game.basket_x,
+                y: BASKET_Y - 22.0,
+                half_width: 48.0,
+                speed: 100.0,
+                content: Content::Word(word),
+            });
+            game.update(0.02);
+            let expected = if correct {
+                FeedbackKind::Correct
+            } else {
+                FeedbackKind::Wrong
+            };
+            assert_eq!(game.pending_sound.take(), Some(expected));
+            assert_eq!(game.feedback.as_ref().unwrap().kind, expected);
+            game.update(0.1);
+            assert_eq!(game.pending_sound, None);
+            assert!(game.feedback.as_ref().unwrap().age > 0.0);
+            game.update(0.8);
+            assert!(game.feedback.is_none());
+        }
     }
 }
